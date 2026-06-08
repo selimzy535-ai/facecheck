@@ -1,318 +1,539 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Gun Game - Signup & Verify</title>
+<title>Mini Militia 2D - Jungle Outpost</title>
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-body {
-  background: linear-gradient(135deg, #1a1a2e, #16213e);
-  color:white;
-  font-family:Arial, sans-serif;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  min-height:100vh;
-  padding:20px;
-}
-.box {
-  background:#0f3460;
-  padding:30px 25px;
-  border-radius:15px;
-  width:100%;
-  max-width:400px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.5);
-}
-h1 { text-align:center; margin-bottom:20px; color:#e94560; }
-h2 { text-align:center; margin-bottom:15px; font-size:18px; }
-input, button {
-  width:100%;
-  padding:14px;
-  margin:8px 0;
-  border-radius:8px;
-  border:none;
-  font-size:16px;
-}
-input { background:#16213e; color:white; outline:none; }
-input:focus { border:2px solid #e94560; }
-button {
-  background:#e94560;
-  color:white;
-  font-weight:bold;
-  cursor:pointer;
-  transition:0.2s;
-}
-button:active { transform:scale(0.97); }
-button:disabled { background:#555; cursor:not-allowed; }
-.code-box {
-  font-size:36px;
-  letter-spacing:8px;
-  background:#16213e;
-  padding:20px;
-  margin:15px 0;
-  border-radius:8px;
-  text-align:center;
-  font-weight:bold;
-  color:#00ff88;
-}
-.hidden { display:none; }
-.msg { text-align:center; margin-top:10px; font-size:14px; min-height:20px; }
-.success { color:#00ff88; }
-.error { color:#ff4757; }
-.tab-btns { display:flex; gap:10px; margin-bottom:20px; }
-.tab-btn { flex:1; background:#16213e; }
-.tab-btn.active { background:#e94560; }
-.small { font-size:12px; color:#aaa; text-align:center; margin-top:15px; }
+  * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; touch-action: none; }
+  body {
+    background: #0f140d;
+    font-family: 'Arial Black', Gadget, sans-serif;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  #gameContainer {
+    position: relative;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+    max-width: 100%;
+    background: #192215;
+  }
+  #hud {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    color: #fff;
+    font-weight: bold;
+    text-shadow: 2px 2px 0px #000;
+    z-index: 10;
+    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    background: rgba(30, 45, 25, 0.75);
+    padding: 8px;
+    border: 2px solid #3b5323;
+    border-radius: 4px;
+    min-width: 160px;
+  }
+  .hud-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .bar-container {
+    width: 90px;
+    height: 10px;
+    background: #222;
+    border: 1px solid #fff;
+    overflow: hidden;
+  }
+  #healthBarFill { height: 100%; background: #ff2222; width: 100%; }
+  #fuelFill { height: 100%; background: #00ffcc; width: 100%; }
+  
+  #gameOver {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(15, 22, 12, 0.95);
+    border: 4px solid #3b5323;
+    color: #fff;
+    padding: 25px 40px;
+    border-radius: 8px;
+    text-align: center;
+    display: none;
+    z-index: 20;
+    box-shadow: 0 0 20px #000;
+  }
+  #gameOver h2 { margin-bottom: 12px; color: #ffcc00; text-transform: uppercase; }
+  #gameOver button {
+    margin-top: 12px;
+    padding: 8px 16px;
+    font-size: 14px;
+    background: #3b5323;
+    border: 2px solid #fff;
+    color: #fff;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  #controls {
+    position: absolute;
+    bottom: 15px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: 0 30px;
+    z-index: 15;
+    pointer-events: none;
+  }
+  .btn-group {
+    display: flex;
+    align-items: center;
+    pointer-events: all;
+  }
+  
+  .joystick-outer {
+    width: 95px;
+    height: 95px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 2.5px dashed rgba(255, 255, 255, 0.35);
+    border-radius: 50%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(1px);
+  }
+  .joystick-center {
+    width: 38px;
+    height: 38px;
+    background: radial-gradient(circle, #7fa27f 0%, #203520 100%);
+    border: 1.5px solid #fff;
+    border-radius: 50%;
+    position: absolute;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.5);
+  }
+  #aimOuter { border: 2.5px solid rgba(233, 69, 96, 0.4); }
+  #aimCenter { background: radial-gradient(circle, #ff526c 0%, #801a27 100%); }
+
+  #newGameBtn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 6px 12px;
+    background: #273822;
+    border: 2px solid #3b5323;
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    z-index: 15;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 11px;
+  }
+
+  @media (min-width: 768px) {
+    body::before {
+      content: "Mobile Only Game 📱\A Open this on your phone or use Mobile View";
+      white-space: pre;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: #0f140d; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; text-align: center; z-index: 9999;
+    }
+    #gameContainer { display: none!important; }
+  }
 </style>
 </head>
 <body>
-
-<div class="box">
-  <h1>🔫 GUN GAME</h1>
-
-  <div class="tab-btns">
-    <button class="tab-btn active" onclick="showTab('signup')">Signup</button>
-    <button class="tab-btn" onclick="showTab('login')">Login</button>
+<div id="gameContainer">
+  <canvas id="game" width="900" height="500"></canvas>
+  <button id="newGameBtn" onclick="restartGame()">Reset</button>
+  <div id="hud">
+    <div class="hud-row"><span>HEALTH:</span> <div class="bar-container"><div id="healthBarFill"></div></div></div>
+    <div class="hud-row"><span>BOOST:</span> <div class="bar-container"><div id="fuelFill"></div></div></div>
+    <div class="hud-row"><span>KILLS:</span> <span id="score">0</span></div>
   </div>
 
-  <!-- SIGNUP TAB -->
-  <div id="signupTab">
-    <input type="text" id="suUsername" placeholder="Choose Username" autocomplete="username">
-    <input type="password" id="suPassword" placeholder="Create Password" autocomplete="new-password">
-    <button onclick="signup()">Create Account</button>
-    <div class="msg" id="suMsg"></div>
-  </div>
-
-  <!-- LOGIN TAB -->
-  <div id="loginTab" class="hidden">
-    <input type="text" id="liUsername" placeholder="Username" autocomplete="username">
-    <input type="password" id="liPassword" placeholder="Password" autocomplete="current-password">
-    <button onclick="login()">Login</button>
-    <div class="msg" id="liMsg"></div>
-  </div>
-
-  <!-- VERIFY TAB -->
-  <div id="verifyTab" class="hidden">
-    <h2>Verify Your Account</h2>
-    <p style="text-align:center; font-size:13px; color:#aaa;">Click "Get Code" then enter same code below</p>
-
-    <button id="genBtn" onclick="generateCode()">Get Code</button>
-
-    <div id="codeArea" class="hidden">
-      <p style="text-align:center">Your Code:</p>
-      <div class="code-box" id="codeDisplay">000</div>
-
-      <input type="text" id="userCode" placeholder="Enter Code" maxlength="6" inputmode="numeric">
-      <button onclick="verifyCode()">Verify & Continue</button>
+  <div id="controls">
+    <div class="btn-group">
+      <div class="joystick-outer" id="movePad">
+        <div class="joystick-center" id="moveStick"></div>
+      </div>
     </div>
-
-    <div class="msg" id="vMsg"></div>
+    <div class="btn-group">
+      <div class="joystick-outer" id="aimOuter">
+        <div class="joystick-center" id="aimCenter"></div>
+      </div>
+    </div>
   </div>
 
-  <p class="small">After verify → Unlock pistol by watching 3 ads</p>
+  <div id="gameOver">
+    <h2>Wasted</h2>
+    <p>Kills: <span id="finalScore">0</span></p>
+    <button onclick="restartGame()">Respawn</button>
+  </div>
 </div>
 
 <script>
-const API = 'http://localhost:3000/api'; // change to your server URL
-let currentToken = '';
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
 
-function showTab(tab) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('signupTab').classList.add('hidden');
-  document.getElementById('loginTab').classList.add('hidden');
+function resizeCanvas() {
+  const maxWidth = window.innerWidth;
+  const maxHeight = window.innerHeight;
+  const ratio = 900 / 500;
+  let w = maxWidth;
+  let h = w / ratio;
+  if (h > maxHeight) { h = maxHeight; w = h * ratio; }
+  canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
 
-  if (tab === 'signup') {
-    document.querySelectorAll('.tab-btn')[0].classList.add('active');
-    document.getElementById('signupTab').classList.remove('hidden');
-  } else {
-    document.querySelectorAll('.tab-btn')[1].classList.add('active');
-    document.getElementById('loginTab').classList.remove('hidden');
+const GRAVITY = 0.45;
+const FLOOR_Y = H - 50;
+const JETPACK_THRUST = 0.55;
+const JETPACK_FUEL_MAX = 100;
+const JETPACK_DRAIN = 0.6;
+const JETPACK_RECHARGE = 0.4;
+
+const bunkerSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 100"><rect x="5" y="30" width="110" height="70" fill="#4a5343" stroke="#2d3329" stroke-width="3"/><rect x="0" y="20" width="120" height="12" fill="#2d3329"/><rect x="45" y="55" width="30" height="45" fill="#1b1f19"/><rect x="15" y="42" width="20" height="15" fill="#111" stroke="#2d3329" stroke-width="2"/><rect x="85" y="42" width="20" height="15" fill="#111" stroke="#2d3329" stroke-width="2"/></svg>`;
+const bunkerImg = new Image(); bunkerImg.src = 'data:image/svg+xml;base64,' + btoa(bunkerSVG);
+
+const soldierSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 50"><circle cx="16" cy="10" r="7" fill="#556b2f" stroke="#2f4f4f" stroke-width="2"/><rect x="10" y="17" width="12" height="18" fill="#6b8e23" rx="3"/><line x1="10" y1="22" x2="4" y2="30" stroke="#556b2f" stroke-width="3"/><line x1="22" y1="22" x2="28" y2="30" stroke="#556b2f" stroke-width="3"/><rect x="11" y="35" width="4" height="12" fill="#2f4f4f"/><rect x="17" y="35" width="4" height="12" fill="#2f4f4f"/></svg>`;
+const playerImg = new Image(); playerImg.src = 'data:image/svg+xml;base64,' + btoa(soldierSVG);
+
+const rifleSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 15"><rect x="0" y="6" width="12" height="6" fill="#5c4033"/><rect x="10" y="3" width="28" height="5" fill="#222"/><rect x="15" y="8" width="5" height="5" fill="#111"/><rect x="38" y="4" width="7" height="2" fill="#444"/></svg>`;
+const rifleImg = new Image(); rifleImg.src = 'data:image/svg+xml;base64,' + btoa(rifleSVG);
+
+let gameState = {
+  player: { x: 150, y: FLOOR_Y - 50, w: 32, h: 50, vx: 0, vy: 0, speed: 4.5, jumpPower: 9, onGround: false, health: 100, facing: 1, fuel: JETPACK_FUEL_MAX, jetpacking: false },
+  bullets: [], enemies: [], particles: [], score: 0, moveX: 0, moveY: 0, aimX: 0, aimY: 0, gameOver: false,
+  platforms: [
+    {x: 0, y: FLOOR_Y, w: W, h: 50},
+    {x: 230, y: H - 150, w: 160, h: 25},
+    {x: 500, y: H - 230, w: 180, h: 25},
+    {x: 80, y: H - 250, w: 110, h: 25},
+    {x: 720, y: H - 140, w: 150, h: 25}
+  ],
+  bunkers: [{x: 740, y: FLOOR_Y - 100, w: 120, h: 100}, {x: 40, y: FLOOR_Y - 100, w: 120, h: 100}],
+  mountains: [
+    { base: 320, peak: 80, color: '#162313', steps: [0, 180, 360, 520, 700, 900] },
+    { base: 220, peak: 140, color: '#22341d', steps: [0, 110, 260, 410, 600, 760, 900] }
+  ]
+};
+
+// --- Left Joystick ---
+const movePad = document.getElementById('movePad');
+const moveStick = document.getElementById('moveStick');
+let moveActive = false;
+const moveCenterX = 47.5, moveCenterY = 47.5, moveMaxDist = 35;
+
+function updateMove(e) {
+  const rect = movePad.getBoundingClientRect();
+  let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  if (e.touches && e.touches.length > 1) {
+    for (let i=0; i<e.touches.length; i++) {
+      let tRect = movePad.getBoundingClientRect();
+      if (e.touches[i].clientX >= tRect.left && e.touches[i].clientX <= tRect.right) {
+        clientX = e.touches[i].clientX; clientY = e.touches[i].clientY;
+      }
+    }
+  }
+  let dx = (clientX - rect.left) - moveCenterX;
+  let dy = (clientY - rect.top) - moveCenterY;
+  let dist = Math.sqrt(dx*dx + dy*dy);
+  if (dist > moveMaxDist) { dx = (dx / dist) * moveMaxDist; dy = (dy / dist) * moveMaxDist; }
+  moveStick.style.left = (moveCenterX + dx - 19) + 'px';
+  moveStick.style.top = (moveCenterY + dy - 19) + 'px';
+  gameState.moveX = dx / moveMaxDist; gameState.moveY = dy / moveMaxDist;
+}
+movePad.addEventListener('touchstart', e => { e.preventDefault(); moveActive = true; updateMove(e); });
+movePad.addEventListener('touchmove', e => { e.preventDefault(); if (moveActive) updateMove(e); });
+movePad.addEventListener('touchend', e => { 
+  e.preventDefault(); moveActive = false; moveStick.style.left = '28.5px'; moveStick.style.top = '28.5px'; gameState.moveX = 0; gameState.moveY = 0; 
+});
+
+// --- Right Joystick ---
+const aimOuter = document.getElementById('aimOuter');
+const aimCenter = document.getElementById('aimCenter');
+let aimActive = false;
+const aimCenterX = 47.5, aimCenterY = 47.5, aimMaxDist = 35;
+let shootInterval = null;
+
+function updateAim(e) {
+  const rect = aimOuter.getBoundingClientRect();
+  let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  if (e.touches && e.touches.length > 1) {
+    for (let i=0; i<e.touches.length; i++) {
+      let tRect = aimOuter.getBoundingClientRect();
+      if (e.touches[i].clientX >= tRect.left && e.touches[i].clientX <= tRect.right) {
+        clientX = e.touches[i].clientX; clientY = e.touches[i].clientY;
+      }
+    }
+  }
+  let dx = (clientX - rect.left) - aimCenterX;
+  let dy = (clientY - rect.top) - aimCenterY;
+  let dist = Math.sqrt(dx*dx + dy*dy);
+  if (dist > aimMaxDist) { dx = (dx / dist) * aimMaxDist; dy = (dy / dist) * aimMaxDist; }
+  aimCenter.style.left = (aimCenterX + dx - 19) + 'px';
+  aimCenter.style.top = (aimCenterY + dy - 19) + 'px';
+  gameState.aimX = dx / aimMaxDist; gameState.aimY = dy / aimMaxDist;
+  if (Math.abs(gameState.aimX) > 0.1) gameState.player.facing = gameState.aimX >= 0 ? 1 : -1;
+}
+aimOuter.addEventListener('touchstart', e => { 
+  e.preventDefault(); aimActive = true; updateAim(e); 
+  if(!shootInterval) shootInterval = setInterval(shoot, 130);
+});
+aimOuter.addEventListener('touchmove', e => { e.preventDefault(); if (aimActive) updateAim(e); });
+aimOuter.addEventListener('touchend', e => { 
+  e.preventDefault(); aimActive = false; aimCenter.style.left = '28.5px'; aimCenter.style.top = '28.5px'; gameState.aimX = 0; gameState.aimY = 0; 
+  clearInterval(shootInterval); shootInterval = null;
+});
+
+function shoot() {
+  if (gameState.gameOver) return;
+  const p = gameState.player;
+  if (gameState.aimX === 0 && gameState.aimY === 0) return;
+  let angle = Math.atan2(gameState.aimY, gameState.aimX);
+  
+  gameState.bullets.push({ x: p.x + 16 + Math.cos(angle)*15, y: p.y + 22 + Math.sin(angle)*15, vx: Math.cos(angle) * 14, vy: Math.sin(angle) * 14, r: 3, life: 45 });
+  for(let i = 0; i < 2; i++) {
+    gameState.particles.push({ x: p.x + 16 + Math.cos(angle)*15, y: p.y + 22 + Math.sin(angle)*15, vx: Math.cos(angle) * 4 + (Math.random()-0.5)*2, vy: Math.sin(angle) * 4 + (Math.random()-0.5)*2, life: 6, r: 2, color: '#ffcc00' });
   }
 }
 
-// ===== SIGNUP =====
-async function signup() {
-  const username = document.getElementById('suUsername').value.trim();
-  const password = document.getElementById('suPassword').value;
-  const msg = document.getElementById('suMsg');
-
-  if (!username ||!password) {
-    msg.innerText = 'Fill all fields';
-    msg.className = 'msg error';
-    return;
-  }
-
-  msg.innerText = 'Creating account...';
-  msg.className = 'msg';
-
-  try {
-    const res = await fetch(`${API}/signup`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ username, password })
-    });
-    const data = await res.json();
-
-    if (!res.ok) throw new Error(data.msg || 'Signup failed');
-
-    // Save token
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('userId', data.userId);
-
-    msg.innerText = 'Account created! Now verify';
-    msg.className = 'msg success';
-
-    setTimeout(() => showVerify(), 1000);
-
-  } catch (e) {
-    msg.innerText = e.message;
-    msg.className = 'msg error';
-  }
+function spawnEnemy() {
+  const side = Math.random() > 0.5 ? 1 : -1;
+  const isSapa = Math.random() > 0.4;
+  
+  // Always spawn fixed perfectly on the main ground level (FLOOR_Y)
+  gameState.enemies.push({
+    type: isSapa ? 'sapa' : 'bandit',
+    x: side > 0 ? -40 : W + 40,
+    y: FLOOR_Y - 45,
+    w: 28, h: 45,
+    vx: side * (isSapa ? 2.2 : 1.2),
+    vy: 0,
+    health: isSapa ? 25 : 60,
+    shootCooldown: isSapa ? 50 : 30
+  });
 }
 
-// ===== LOGIN =====
-async function login() {
-  const username = document.getElementById('liUsername').value.trim();
-  const password = document.getElementById('liPassword').value;
-  const msg = document.getElementById('liMsg');
+function updatePlayer() {
+  const p = gameState.player;
+  if (Math.abs(gameState.moveX) > 0.15) {
+    p.vx = gameState.moveX * p.speed;
+    if (Math.abs(gameState.aimX) <= 0.1) p.facing = p.vx >= 0 ? 1 : -1;
+  } else { p.vx *= 0.75; }
 
-  if (!username ||!password) {
-    msg.innerText = 'Fill all fields';
-    msg.className = 'msg error';
-    return;
+  p.jetpacking = false;
+  if (gameState.moveY < -0.35) {
+    if (p.onGround) { p.vy = -p.jumpPower; p.onGround = false; }
+    else if (p.fuel > 0) {
+      p.vy -= JETPACK_THRUST; p.fuel -= JETPACK_DRAIN; p.jetpacking = true;
+      if (Math.random() > 0.2) {
+        gameState.particles.push({ x: p.x + 16 + (Math.random()-0.5)*6, y: p.y + p.h, vx: p.vx * 0.4 + (Math.random()-0.5)*2, vy: 3 + Math.random()*2, life: 12, r: 2 + Math.random()*2, color: '#ff6600' });
+      }
+    }
   }
+  if (p.onGround && p.fuel < JETPACK_FUEL_MAX) p.fuel = Math.min(JETPACK_FUEL_MAX, p.fuel + JETPACK_RECHARGE);
 
-  msg.innerText = 'Logging in...';
-  msg.className = 'msg';
+  p.vy += GRAVITY; p.x += p.vx; p.y += p.vy;
+  p.onGround = false;
+  for (let plat of gameState.platforms) {
+    if (p.x + p.w > plat.x && p.x < plat.x + plat.w && p.y + p.h > plat.y && p.y + p.h - p.vy <= plat.y) {
+      p.y = plat.y - p.h; p.vy = 0; p.onGround = true;
+    }
+  }
+  if (p.x < 0) p.x = 0; if (p.x + p.w > W) p.x = W - p.w; if (p.y < 0) { p.y = 0; p.vy = 0; }
+}
 
-  try {
-    const res = await fetch(`${API}/login`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ username, password })
-    });
-    const data = await res.json();
+function updateBullets() {
+  gameState.bullets = gameState.bullets.filter(b => {
+    b.x += b.vx; b.y += b.vy; b.life--;
+    for (let i = gameState.enemies.length - 1; i >= 0; i--) {
+      const e = gameState.enemies[i];
+      if (b.x > e.x && b.x < e.x + e.w && b.y > e.y && b.y < e.y + e.h && !b.enemy) {
+        e.health -= 20;
+        for(let j = 0; j < 5; j++) gameState.particles.push({ x: b.x, y: b.y, vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5, life: 10, r: 2, color: e.type === 'bandit' ? '#ffcc00' : '#aa0000' });
+        if (e.health <= 0) { gameState.enemies.splice(i, 1); gameState.score += 1; }
+        return false;
+      }
+    }
+    return b.life > 0 && b.x > 0 && b.x < W && b.y > 0 && b.y < H;
+  });
+}
 
-    if (!res.ok) throw new Error(data.msg || 'Login failed');
+function updateEnemies() {
+  const p = gameState.player;
+  gameState.enemies.forEach(e => {
+    let speedMod = e.type === 'sapa' ? 2.0 : 1.1;
+    if (e.x < p.x) e.vx = speedMod; else e.vx = -speedMod;
+    
+    e.x += e.vx;
+    // Strictly snap enemies to the primary ground layout line only
+    e.y = FLOOR_Y - e.h; 
+    e.vy = 0;
 
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('userId', data.userId);
-
-    // Check if verified
-    if (data.verified) {
-      window.location = 'unlock.html';
-    } else {
-      showVerify();
+    e.shootCooldown--;
+    if (e.shootCooldown <= 0 && Math.abs(e.x - p.x) < 420) {
+      const angle = Math.atan2(p.y + 20 - (e.y + 20), p.x + 16 - (e.x + 14));
+      gameState.bullets.push({ x: e.x + 14, y: e.y + 20, vx: Math.cos(angle) * (e.type === 'sapa' ? 6 : 8), vy: Math.sin(angle) * (e.type === 'sapa' ? 6 : 8), r: 2.5, life: 65, enemy: true });
+      e.shootCooldown = e.type === 'sapa' ? 80 + Math.random()*30 : 40 + Math.random()*40;
     }
 
-  } catch (e) {
-    msg.innerText = e.message;
-    msg.className = 'msg error';
-  }
-}
-
-// ===== SHOW VERIFY SECTION =====
-function showVerify() {
-  document.getElementById('signupTab').classList.add('hidden');
-  document.getElementById('loginTab').classList.add('hidden');
-  document.getElementById('verifyTab').classList.remove('hidden');
-}
-
-// ===== GENERATE BROWSER TOKEN =====
-async function generateCode() {
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
-  currentToken = code;
-
-  document.getElementById('codeDisplay').innerText = code;
-  document.getElementById('codeArea').classList.remove('hidden');
-  document.getElementById('genBtn').disabled = true;
-  document.getElementById('vMsg').innerText = 'Code expires in 10 minutes';
-  document.getElementById('vMsg').className = 'msg success';
-
-  // Send token to backend
-  const token = localStorage.getItem('token');
-  await fetch(`${API}/set-verify-token`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + token
-    },
-    body: JSON.stringify({ token: code })
+    if (p.x < e.x + e.w && p.x + p.w > e.x && p.y < e.y + e.h && p.y + p.h > e.y) {
+      p.health -= e.type === 'bandit' ? 0.6 : 0.3;
+      if (p.health <= 0) endGame();
+    }
   });
 
-  // Auto expire after 10min
-  setTimeout(() => {
-    currentToken = '';
-    document.getElementById('genBtn').disabled = false;
-    document.getElementById('vMsg').innerText = 'Code expired. Click Get Code again';
-    document.getElementById('vMsg').className = 'msg error';
-  }, 600000);
+  gameState.bullets.forEach(b => {
+    if (b.enemy && b.x > p.x && b.x < p.x + p.w && b.y > p.y && b.y < p.y + p.h) {
+      p.health -= 7; b.life = 0;
+      if (p.health <= 0) endGame();
+    }
+  });
 }
 
-// ===== VERIFY CODE =====
-async function verifyCode() {
-  const input = document.getElementById('userCode').value.trim();
-  const msg = document.getElementById('vMsg');
-  const token = localStorage.getItem('token');
+function updateParticles() { gameState.particles = gameState.particles.filter(pt => { pt.x += pt.vx; pt.y += pt.vy; pt.life--; return pt.life > 0; }); }
 
-  if (input!== currentToken) {
-    msg.innerText = 'Wrong code. Try again';
-    msg.className = 'msg error';
-    return;
+function draw() {
+  const gradient = ctx.createLinearGradient(0, 0, 0, H);
+  gradient.addColorStop(0, '#101a0e'); gradient.addColorStop(1, '#2c3e27');
+  ctx.fillStyle = gradient; ctx.fillRect(0, 0, W, H);
+
+  gameState.mountains.forEach(mnt => {
+    ctx.fillStyle = mnt.color;
+    ctx.beginPath();
+    ctx.moveTo(0, H);
+    for (let i = 0; i < mnt.steps.length; i++) {
+      let x = mnt.steps[i];
+      let y = mnt.base - (i % 2 === 0 ? mnt.peak : mnt.peak * 0.4) - (Math.sin(i)*15);
+      ctx.lineTo(x, y);
+    }
+    ctx.lineTo(W, H);
+    ctx.fill();
+  });
+
+  ctx.fillStyle = 'rgba(20, 35, 15, 0.3)';
+  for (let i = 0; i < W; i += 90) {
+    ctx.beginPath(); ctx.arc(i, FLOOR_Y - 10, 45, 0, Math.PI, true); ctx.fill();
   }
 
-  msg.innerText = 'Verifying...';
-  msg.className = 'msg';
+  gameState.platforms.forEach(p => {
+    ctx.fillStyle = '#3a2d1f'; ctx.fillRect(p.x, p.y, p.w, p.h);
+    ctx.fillStyle = '#4c6b3e'; ctx.fillRect(p.x, p.y, p.w, 6);
+  });
 
-  try {
-    const res = await fetch(`${API}/verify-token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + token
-      },
-      body: JSON.stringify({ token: input })
-    });
+  gameState.bunkers.forEach(b => { ctx.drawImage(bunkerImg, b.x, b.y, b.w, b.h); });
 
-    const data = await res.json();
-
-    if (!res.ok) throw new Error(data.msg);
-
-    msg.innerText = '✅ Verified! Redirecting...';
-    msg.className = 'msg success';
-
-    setTimeout(() => {
-      window.location = 'unlock.html';
-    }, 1500);
-
-  } catch (e) {
-    msg.innerText = e.message;
-    msg.className = 'msg error';
+  if (gameState.player.jetpacking) {
+    ctx.fillStyle = '#ff4500'; ctx.beginPath();
+    ctx.moveTo(gameState.player.x + (gameState.player.facing > 0 ? 4 : 22), gameState.player.y + 32);
+    ctx.lineTo(gameState.player.x + (gameState.player.facing > 0 ? -2 : 28), gameState.player.y + 50);
+    ctx.lineTo(gameState.player.x + (gameState.player.facing > 0 ? 10 : 16), gameState.player.y + 36);
+    ctx.fill();
   }
+
+  ctx.save();
+  if (gameState.player.facing < 0) {
+    ctx.translate(gameState.player.x + gameState.player.w, gameState.player.y); ctx.scale(-1, 1);
+    ctx.drawImage(playerImg, 0, 0, gameState.player.w, gameState.player.h);
+  } else {
+    ctx.drawImage(playerImg, gameState.player.x, gameState.player.y, gameState.player.w, gameState.player.h);
+  }
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(gameState.player.x + 16, gameState.player.y + 24);
+  let gunAngle = (gameState.aimX === 0 && gameState.aimY === 0) ? (gameState.player.facing > 0 ? 0 : Math.PI) : Math.atan2(gameState.aimY, gameState.aimX);
+  if (gameState.player.facing < 0) {
+    ctx.scale(1, -1);
+    ctx.rotate(-gunAngle + Math.PI);
+  } else {
+    ctx.rotate(gunAngle);
+  }
+  ctx.drawImage(rifleImg, -5, -4, 28, 10);
+  ctx.restore();
+
+  if (Math.abs(gameState.aimX) > 0.05 || Math.abs(gameState.aimY) > 0.05) {
+    ctx.strokeStyle = 'rgba(255, 0, 50, 0.45)'; ctx.lineWidth = 1; ctx.setLineDash([5, 5]);
+    ctx.beginPath(); ctx.moveTo(gameState.player.x + 16, gameState.player.y + 24);
+    let angle = Math.atan2(gameState.aimY, gameState.aimX);
+    ctx.lineTo(gameState.player.x + 16 + Math.cos(angle) * 180, gameState.player.y + 24 + Math.sin(angle) * 180);
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  gameState.enemies.forEach(e => {
+    if (e.type === 'bandit') {
+      ctx.fillStyle = '#6e583f'; ctx.fillRect(e.x, e.y, e.w, e.h);
+      ctx.fillStyle = '#222'; ctx.fillRect(e.x + 3, e.y, e.w - 6, 12);
+      ctx.fillStyle = '#cc0000'; ctx.font = '9px Arial'; ctx.fillText("BANDIT", e.x - 4, e.y - 16);
+    } else {
+      ctx.fillStyle = '#839b78'; ctx.fillRect(e.x, e.y, e.w, e.h);
+      ctx.fillStyle = '#412b15'; ctx.fillRect(e.x + 5, e.y, e.w - 10, 11);
+      ctx.fillStyle = '#ff9900'; ctx.font = '9px Arial'; ctx.fillText("SAPA", e.x + 2, e.y - 16);
+    }
+    
+    ctx.fillStyle = '#111'; ctx.fillRect(e.x - 2, e.y + 20, e.w + 4, 4);
+
+    let maxHp = e.type === 'bandit' ? 60 : 25;
+    ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(e.x - 2, e.y - 10, e.w + 4, 4);
+    ctx.fillStyle = e.type === 'bandit' ? '#ffcc00' : '#ff3333';
+    ctx.fillRect(e.x - 2, e.y - 10, (e.w + 4) * (e.health/maxHp), 4);
+  });
+
+  gameState.bullets.forEach(b => { ctx.fillStyle = b.enemy ? '#ff4444' : '#00ffff'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill(); });
+  gameState.particles.forEach(pt => { ctx.fillStyle = pt.color; ctx.globalAlpha = Math.max(0, pt.life / 15); ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.r, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; });
+
+  document.getElementById('healthBarFill').style.width = Math.max(0, gameState.player.health) + '%';
+  document.getElementById('fuelFill').style.width = (gameState.player.fuel / JETPACK_FUEL_MAX * 100) + '%';
+  document.getElementById('score').textContent = gameState.score;
 }
 
-// ===== AUTO LOGIN IF TOKEN EXISTS =====
-window.onload = () => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    // Check if user already verified
-    fetch(`${API}/me`, {
-      headers: {'Authorization': 'Bearer ' + token}
-    })
-   .then(r => r.json())
-   .then(data => {
-      if (data.verified) {
-        window.location = 'unlock.html';
-      } else {
-        showVerify();
-      }
-    })
-   .catch(() => {
-      localStorage.clear();
-    });
+let enemySpawnTimer = 0;
+function gameLoop() {
+  if (!gameState.gameOver) {
+    updatePlayer(); updateBullets(); updateEnemies(); updateParticles();
+    enemySpawnTimer--;
+    if (enemySpawnTimer <= 0) { spawnEnemy(); enemySpawnTimer = 100 - Math.min(gameState.score * 2, 55); }
   }
-};
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+
+function endGame() {
+  gameState.gameOver = true;
+  document.getElementById('finalScore').textContent = gameState.score;
+  document.getElementById('gameOver').style.display = 'block';
+  if(shootInterval) { clearInterval(shootInterval); shootInterval = null; }
+}
+
+function restartGame() {
+  gameState.player = { x: 150, y: FLOOR_Y - 50, w: 32, h: 50, vx: 0, vy: 0, speed: 4.5, jumpPower: 9, onGround: false, health: 100, facing: 1, fuel: JETPACK_FUEL_MAX, jetpacking: false };
+  gameState.bullets = []; gameState.enemies = []; gameState.particles = []; gameState.score = 0; gameState.moveX = 0; gameState.moveY = 0; gameState.aimX = 0; gameState.aimY = 0; gameState.gameOver = false;
+  document.getElementById('gameOver').style.display = 'none';
+  enemySpawnTimer = 40;
+}
+
+enemySpawnTimer = 40;
+gameLoop();
 </script>
 </body>
 </html>
