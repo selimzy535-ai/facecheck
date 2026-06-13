@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Mini Militia 2D - Jungle Outpost</title>
+<title>Mini Militia 2D - Outpost Royale Real Avatar Edition</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; touch-action: none; }
   body {
@@ -19,8 +19,15 @@
   #gameContainer {
     position: relative;
     box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
-    max-width: 100%;
+    width: 100vw;
+    height: 100vh;
     background: #192215;
+    overflow: hidden;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
   }
   #hud {
     position: absolute;
@@ -30,15 +37,15 @@
     font-weight: bold;
     text-shadow: 2px 2px 0px #000;
     z-index: 10;
-    font-size: 12px;
+    font-size: 11px;
     display: flex;
     flex-direction: column;
-    gap: 5px;
-    background: rgba(30, 45, 25, 0.75);
+    gap: 4px;
+    background: rgba(30, 45, 25, 0.8);
     padding: 8px;
     border: 2px solid #3b5323;
     border-radius: 4px;
-    min-width: 160px;
+    min-width: 140px;
   }
   .hud-row {
     display: flex;
@@ -46,14 +53,74 @@
     align-items: center;
   }
   .bar-container {
-    width: 90px;
-    height: 10px;
+    width: 80px;
+    height: 8px;
     background: #222;
     border: 1px solid #fff;
     overflow: hidden;
   }
   #healthBarFill { height: 100%; background: #ff2222; width: 100%; }
   #fuelFill { height: 100%; background: #00ffcc; width: 100%; }
+
+  #minimapContainer {
+    position: absolute;
+    top: 55px;
+    right: 12px;
+    width: 180px;
+    height: 60px;
+    background: rgba(10, 20, 10, 0.85);
+    border: 2px solid #3b5323;
+    border-radius: 4px;
+    z-index: 15;
+    overflow: hidden;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+  }
+  #radarCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  #topSelectors {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 15px;
+    z-index: 15;
+    background: rgba(15, 22, 12, 0.6);
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.15);
+    backdrop-filter: blur(2px);
+  }
+  .selector-group {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .selector-group span {
+    color: #aaa;
+    font-size: 10px;
+    text-shadow: 1px 1px #000;
+  }
+  .top-btn {
+    background: #25331e;
+    border: 1.5px solid #4a6637;
+    color: #fff;
+    padding: 4px 10px;
+    font-size: 10px;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+  .top-btn.active {
+    background: #e94556;
+    border-color: #fff;
+    box-shadow: 0 0 5px #e94556;
+  }
   
   #gameOver {
     position: absolute;
@@ -85,13 +152,13 @@
 
   #controls {
     position: absolute;
-    bottom: 15px;
+    bottom: 25px;
     left: 0;
     width: 100%;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    padding: 0 30px;
+    padding: 0 40px;
     z-index: 15;
     pointer-events: none;
   }
@@ -157,8 +224,29 @@
 </head>
 <body>
 <div id="gameContainer">
-  <canvas id="game" width="900" height="500"></canvas>
+  <canvas id="game"></canvas>
+  
+  <div id="topSelectors">
+    <div class="selector-group">
+      <span>MAP:</span>
+      <button class="top-btn active" id="btnMap0" onclick="changeMap(0)">Jungle</button>
+      <button class="top-btn" id="btnMap1" onclick="changeMap(1)">Desert</button>
+      <button class="top-btn" id="btnMap2" onclick="changeMap(2)">Catacomb</button>
+    </div>
+    <div class="selector-group">
+      <span>GUN:</span>
+      <button class="top-btn active" id="btnGun0" onclick="changeGun(0)">Rifle</button>
+      <button class="top-btn" id="btnGun1" onclick="changeGun(1)">Uzi</button>
+      <button class="top-btn" id="btnGun2" onclick="changeGun(2)">Sniper</button>
+    </div>
+  </div>
+
+  <div id="minimapContainer">
+    <canvas id="radarCanvas" width="180" height="60"></canvas>
+  </div>
+
   <button id="newGameBtn" onclick="restartGame()">Reset</button>
+  
   <div id="hud">
     <div class="hud-row"><span>HEALTH:</span> <div class="bar-container"><div id="healthBarFill"></div></div></div>
     <div class="hud-row"><span>BOOST:</span> <div class="bar-container"><div id="fuelFill"></div></div></div>
@@ -188,54 +276,177 @@
 <script>
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
-const W = canvas.width, H = canvas.height;
+const radarCanvas = document.getElementById('radarCanvas');
+const radarCtx = radarCanvas.getContext('2d');
+
+const MAP_W = 3200; 
+const MAP_H = 1000;
+let viewW = window.innerWidth;
+let viewH = window.innerHeight;
 
 function resizeCanvas() {
-  const maxWidth = window.innerWidth;
-  const maxHeight = window.innerHeight;
-  const ratio = 900 / 500;
-  let w = maxWidth;
-  let h = w / ratio;
-  if (h > maxHeight) { h = maxHeight; w = h * ratio; }
-  canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+  viewW = window.innerWidth; viewH = window.innerHeight;
+  canvas.width = viewW; canvas.height = viewH;
 }
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
+let camera = { x: 0, y: 0 };
+
+// --- Audio Engine ---
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playShotSound(gunType) {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  let duration = 0.1; let frequency = 400; let volume = 0.4;
+  if(gunType === 1) { duration = 0.06; frequency = 600; volume = 0.25; } 
+  else if(gunType === 2) { duration = 0.25; frequency = 180; volume = 0.6; }
+
+  const bufferSize = audioCtx.sampleRate * duration;
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
+  
+  const noise = audioCtx.createBufferSource();
+  noise.buffer = buffer;
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+  filter.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + (duration * 0.9));
+  
+  const gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+  gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+  
+  noise.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+  noise.start();
+}
+
+function playDeathSound() {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const time = audioCtx.currentTime;
+  const osc1 = audioCtx.createOscillator(); const osc2 = audioCtx.createOscillator();
+  const gainNode = audioCtx.createGain(); const filter = audioCtx.createBiquadFilter();
+  osc1.type = 'sawtooth'; osc2.type = 'triangle';
+  osc1.frequency.setValueAtTime(130, time); osc1.frequency.exponentialRampToValueAtTime(65, time + 0.22);
+  osc2.frequency.setValueAtTime(133, time); osc2.frequency.exponentialRampToValueAtTime(67, time + 0.22);
+  filter.type = 'lowpass'; filter.frequency.setValueAtTime(350, time); filter.frequency.exponentialRampToValueAtTime(110, time + 0.2);
+  gainNode.gain.setValueAtTime(0.5, time); gainNode.gain.linearRampToValueAtTime(0.3, time + 0.08); gainNode.gain.linearRampToValueAtTime(0.01, time + 0.24);
+  osc1.connect(filter); osc2.connect(filter); filter.connect(gainNode); gainNode.connect(audioCtx.destination);
+  osc1.start(time); osc2.start(time); osc1.stop(time + 0.25); osc2.stop(time + 0.25);
+}
+
 const GRAVITY = 0.45;
-const FLOOR_Y = H - 50;
-const JETPACK_THRUST = 0.55;
+const FLOOR_Y = MAP_H - 70;
+const JETPACK_THRUST = 0.58;
 const JETPACK_FUEL_MAX = 100;
-const JETPACK_DRAIN = 0.6;
-const JETPACK_RECHARGE = 0.4;
+const JETPACK_DRAIN = 0.5;
+const JETPACK_RECHARGE = 0.45;
 
 const bunkerSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 100"><rect x="5" y="30" width="110" height="70" fill="#4a5343" stroke="#2d3329" stroke-width="3"/><rect x="0" y="20" width="120" height="12" fill="#2d3329"/><rect x="45" y="55" width="30" height="45" fill="#1b1f19"/><rect x="15" y="42" width="20" height="15" fill="#111" stroke="#2d3329" stroke-width="2"/><rect x="85" y="42" width="20" height="15" fill="#111" stroke="#2d3329" stroke-width="2"/></svg>`;
 const bunkerImg = new Image(); bunkerImg.src = 'data:image/svg+xml;base64,' + btoa(bunkerSVG);
 
-const soldierSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 50"><circle cx="16" cy="10" r="7" fill="#556b2f" stroke="#2f4f4f" stroke-width="2"/><rect x="10" y="17" width="12" height="18" fill="#6b8e23" rx="3"/><line x1="10" y1="22" x2="4" y2="30" stroke="#556b2f" stroke-width="3"/><line x1="22" y1="22" x2="28" y2="30" stroke="#556b2f" stroke-width="3"/><rect x="11" y="35" width="4" height="12" fill="#2f4f4f"/><rect x="17" y="35" width="4" height="12" fill="#2f4f4f"/></svg>`;
-const playerImg = new Image(); playerImg.src = 'data:image/svg+xml;base64,' + btoa(soldierSVG);
+// --- High Detail Human Avatars (Mini Militia Bobble Style with Eyes, Nose, Real Body Form) ---
+const playerHumanSVG = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 60">
+  <path d="M8,15 C8,4 32,4 32,15 L32,18 L8,18 Z" fill="#455a64" stroke="#263238" stroke-width="1.5"/>
+  <rect x="6" y="16" width="28" height="3" fill="#37474f" rx="1"/>
+  <circle cx="20" cy="22" r="9" fill="#ffcc99"/>
+  <ellipse cx="23" cy="21" rx="1.5" ry="2" fill="#fff"/>
+  <circle cx="23.5" cy="21" r="0.8" fill="#111"/>
+  <ellipse cx="17" cy="21" rx="1.5" ry="2" fill="#fff"/>
+  <circle cx="16.5" cy="21" r="0.8" fill="#111"/>
+  <path d="M19.5,21 L20.5,23 L19.5,24" stroke="#e0a070" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M18,27 Q20,29 22,27" stroke="#b26a50" stroke-width="1.5" fill="none"/>
+  <rect x="11" y="31" width="18" height="18" fill="#2e7d32" rx="4" stroke="#1b5e20" stroke-width="1.5"/>
+  <rect x="13" y="33" width="14" height="12" fill="#1b5e20" rx="1"/>
+  <rect x="11" y="45" width="18" height="3" fill="#3e2723"/>
+  <rect x="13" y="49" width="5" height="10" fill="#37474f"/>
+  <rect x="11" y="56" width="7" height="4" fill="#212121" rx="1"/>
+  <rect x="22" y="49" width="5" height="10" fill="#37474f"/>
+  <rect x="22" y="56" width="7" height="4" fill="#212121" rx="1"/>
+</svg>`;
+const playerImg = new Image(); playerImg.src = 'data:image/svg+xml;base64,' + btoa(playerHumanSVG);
 
-const rifleSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 15"><rect x="0" y="6" width="12" height="6" fill="#5c4033"/><rect x="10" y="3" width="28" height="5" fill="#222"/><rect x="15" y="8" width="5" height="5" fill="#111"/><rect x="38" y="4" width="7" height="2" fill="#444"/></svg>`;
-const rifleImg = new Image(); rifleImg.src = 'data:image/svg+xml;base64,' + btoa(rifleSVG);
+const enemyHumanSVG = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 60">
+  <path d="M9,13 Q20,7 31,13 L31,17 L9,17 Z" fill="#d32f2f"/>
+  <rect x="7" y="15" width="26" height="3" fill="#b71c1c"/>
+  <circle cx="20" cy="22" r="9" fill="#ffdbac"/>
+  <path d="M15,18 L19,20" stroke="#111" stroke-width="1.5"/>
+  <path d="M25,18 L21,20" stroke="#111" stroke-width="1.5"/>
+  <ellipse cx="17" cy="22" rx="1.5" ry="1.8" fill="#fff"/>
+  <circle cx="17.5" cy="22" r="0.7" fill="#111"/>
+  <ellipse cx="23" cy="22" rx="1.5" ry="1.8" fill="#fff"/>
+  <circle cx="22.5" cy="22" r="0.7" fill="#111"/>
+  <path d="M19.5,22 L20.5,24 L19.5,25" stroke="#d4a373" stroke-width="1.5" fill="none"/>
+  <line x1="17" y1="27" x2="23" y2="27" stroke="#111" stroke-width="1.5"/>
+  <rect x="11" y="31" width="18" height="18" fill="#f57c00" rx="3" stroke="#e65100" stroke-width="1.5"/>
+  <rect x="14" y="34" width="12" height="10" fill="#bf360c" rx="1"/>
+  <rect x="13" y="49" width="5" height="10" fill="#263238"/>
+  <rect x="11" y="56" width="7" height="4" fill="#111" rx="1"/>
+  <rect x="22" y="49" width="5" height="10" fill="#263238"/>
+  <rect x="22" y="56" width="7" height="4" fill="#111" rx="1"/>
+</svg>`;
+const humanEnemyImg = new Image(); humanEnemyImg.src = 'data:image/svg+xml;base64,' + btoa(enemyHumanSVG);
+
+const weapons = [
+  { name: 'Rifle', fireRate: 140, damage: 20, speed: 15, range: 450, color: '#00ffff', svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 15"><rect x="0" y="6" width="12" height="6" fill="#5c4033"/><rect x="10" y="3" width="28" height="5" fill="#222"/><rect x="15" y="8" width="5" height="5" fill="#111"/><rect x="38" y="4" width="7" height="2" fill="#444"/></svg>` },
+  { name: 'Uzi', fireRate: 80, damage: 10, speed: 18, range: 350, color: '#ffff00', svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 35 15"><rect x="5" y="4" width="18" height="6" fill="#444"/><rect x="8" y="9" width="4" height="6" fill="#222"/><rect x="22" y="5" width="10" height="2" fill="#111"/></svg>` },
+  { name: 'Sniper', fireRate: 650, damage: 65, speed: 26, range: 800, color: '#ff2266', svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 55 15"><rect x="0" y="5" width="15" height="5" fill="#2d3329"/><rect x="14" y="4" width="35" height="3" fill="#111"/><rect x="18" y="1" width="10" height="3" fill="#222"/><rect x="48" y="4" width="7" height="1" fill="#aaa"/></svg>` }
+];
+
+let activeGunIdx = 0;
+let rifleImg = new Image(); rifleImg.src = 'data:image/svg+xml;base64,' + btoa(weapons[activeGunIdx].svg);
+
+const mapThemes = [
+  { id: 0, skyTop: '#101a0e', skyBottom: '#2c3e27', ground: '#3a2d1f', grass: '#4c6b3e', canopy: 'rgba(20, 35, 15, 0.3)', mountains: [{ base: 650, peak: 180, color: '#131e10' }, { base: 500, peak: 260, color: '#1b2b17' }] },
+  { id: 1, skyTop: '#2b1f15', skyBottom: '#5c4028', ground: '#543d2b', grass: '#b08343', canopy: 'rgba(92, 64, 40, 0.25)', mountains: [{ base: 620, peak: 150, color: '#382617' }, { base: 480, peak: 220, color: '#4a3420' }] },
+  { id: 2, skyTop: '#080812', skyBottom: '#181528', ground: '#1f1e2e', grass: '#483d8a', canopy: 'rgba(40, 30, 90, 0.2)', mountains: [{ base: 680, peak: 200, color: '#0e0c17' }, { base: 530, peak: 290, color: '#141224' }] }
+];
+let activeMapIdx = 0;
+
+let mountainSteps1 = [0, 300, 700, 1100, 1500, 1900, 2300, 2700, 3200];
+let mountainSteps2 = [0, 200, 500, 900, 1300, 1700, 2100, 2500, 2900, 3200];
+
+const humanNames = ["Slayer_X", "NoobMaster", "MilitiaGod", "Shadow Ninja", "Alpha_Striker", "GhostRider", "BulletStorm", "Vortex", "Savage_King", "Phoenix_Rx"];
 
 let gameState = {
-  player: { x: 150, y: FLOOR_Y - 50, w: 32, h: 50, vx: 0, vy: 0, speed: 4.5, jumpPower: 9, onGround: false, health: 100, facing: 1, fuel: JETPACK_FUEL_MAX, jetpacking: false },
+  player: { x: 400, y: FLOOR_Y - 60, w: 34, h: 52, vx: 0, vy: 0, speed: 5.0, jumpPower: 9.5, onGround: false, health: 100, facing: 1, fuel: JETPACK_FUEL_MAX, jetpacking: false },
   bullets: [], enemies: [], particles: [], score: 0, moveX: 0, moveY: 0, aimX: 0, aimY: 0, gameOver: false,
   platforms: [
-    {x: 0, y: FLOOR_Y, w: W, h: 50},
-    {x: 230, y: H - 150, w: 160, h: 25},
-    {x: 500, y: H - 230, w: 180, h: 25},
-    {x: 80, y: H - 250, w: 110, h: 25},
-    {x: 720, y: H - 140, w: 150, h: 25}
+    {x: 0, y: FLOOR_Y, w: MAP_W, h: 70}, 
+    {x: 230, y: MAP_H - 220, w: 220, h: 25},
+    {x: 580, y: MAP_H - 340, w: 280, h: 25},
+    {x: 1000, y: MAP_H - 200, w: 300, h: 25},
+    {x: 1450, y: MAP_H - 360, w: 400, h: 25},
+    {x: 2000, y: MAP_H - 240, w: 260, h: 25},
+    {x: 2400, y: MAP_H - 400, w: 350, h: 25}
   ],
-  bunkers: [{x: 740, y: FLOOR_Y - 100, w: 120, h: 100}, {x: 40, y: FLOOR_Y - 100, w: 120, h: 100}],
-  mountains: [
-    { base: 320, peak: 80, color: '#162313', steps: [0, 180, 360, 520, 700, 900] },
-    { base: 220, peak: 140, color: '#22341d', steps: [0, 110, 260, 410, 600, 760, 900] }
+  bunkers: [
+    {x: 100, y: FLOOR_Y - 100, w: 120, h: 100}, {x: 1100, y: FLOOR_Y - 100, w: 120, h: 100},
+    {x: 2200, y: FLOOR_Y - 100, w: 120, h: 100}, {x: 2900, y: FLOOR_Y - 100, w: 120, h: 100}
   ]
 };
 
-// --- Left Joystick ---
+function changeMap(idx) {
+  activeMapIdx = idx;
+  for(let i=0; i<3; i++) document.getElementById('btnMap'+i).classList.remove('active');
+  document.getElementById('btnMap'+idx).classList.add('active');
+}
+
+function changeGun(idx) {
+  activeGunIdx = idx;
+  rifleImg.src = 'data:image/svg+xml;base64,' + btoa(weapons[idx].svg);
+  for(let i=0; i<3; i++) document.getElementById('btnGun'+i).classList.remove('active');
+  document.getElementById('btnGun'+idx).classList.add('active');
+  if(aimActive) {
+    clearInterval(shootInterval);
+    shootInterval = setInterval(shoot, weapons[activeGunIdx].fireRate);
+  }
+}
+
+// --- Joysticks ---
 const movePad = document.getElementById('movePad');
 const moveStick = document.getElementById('moveStick');
 let moveActive = false;
@@ -267,7 +478,6 @@ movePad.addEventListener('touchend', e => {
   e.preventDefault(); moveActive = false; moveStick.style.left = '28.5px'; moveStick.style.top = '28.5px'; gameState.moveX = 0; gameState.moveY = 0; 
 });
 
-// --- Right Joystick ---
 const aimOuter = document.getElementById('aimOuter');
 const aimCenter = document.getElementById('aimCenter');
 let aimActive = false;
@@ -297,7 +507,7 @@ function updateAim(e) {
 }
 aimOuter.addEventListener('touchstart', e => { 
   e.preventDefault(); aimActive = true; updateAim(e); 
-  if(!shootInterval) shootInterval = setInterval(shoot, 130);
+  if(!shootInterval) shootInterval = setInterval(shoot, weapons[activeGunIdx].fireRate);
 });
 aimOuter.addEventListener('touchmove', e => { e.preventDefault(); if (aimActive) updateAim(e); });
 aimOuter.addEventListener('touchend', e => { 
@@ -311,26 +521,44 @@ function shoot() {
   if (gameState.aimX === 0 && gameState.aimY === 0) return;
   let angle = Math.atan2(gameState.aimY, gameState.aimX);
   
-  gameState.bullets.push({ x: p.x + 16 + Math.cos(angle)*15, y: p.y + 22 + Math.sin(angle)*15, vx: Math.cos(angle) * 14, vy: Math.sin(angle) * 14, r: 3, life: 45 });
+  const currentGun = weapons[activeGunIdx];
+  playShotSound(activeGunIdx);
+  
+  gameState.bullets.push({ 
+    x: p.x + 16 + Math.cos(angle)*15, y: p.y + 22 + Math.sin(angle)*15, 
+    vx: Math.cos(angle) * currentGun.speed, vy: Math.sin(angle) * currentGun.speed, 
+    r: activeGunIdx === 2 ? 4 : 3, life: Math.round(currentGun.range / currentGun.speed),
+    damage: currentGun.damage, enemy: false 
+  });
+  
   for(let i = 0; i < 2; i++) {
-    gameState.particles.push({ x: p.x + 16 + Math.cos(angle)*15, y: p.y + 22 + Math.sin(angle)*15, vx: Math.cos(angle) * 4 + (Math.random()-0.5)*2, vy: Math.sin(angle) * 4 + (Math.random()-0.5)*2, life: 6, r: 2, color: '#ffcc00' });
+    gameState.particles.push({ x: p.x + 16 + Math.cos(angle)*15, y: p.y + 22 + Math.sin(angle)*15, vx: Math.cos(angle) * 4 + (Math.random()-0.5)*2, vy: Math.sin(angle) * 4 + (Math.random()-0.5)*2, life: 6, r: 2, color: currentGun.color });
   }
 }
 
 function spawnEnemy() {
-  const side = Math.random() > 0.5 ? 1 : -1;
-  const isSapa = Math.random() > 0.4;
+  const p = gameState.player;
+  let spawnX = Math.random() > 0.5 ? p.x + (viewW/2 + 150 + Math.random()*250) : p.x - (viewW/2 + 150 + Math.random()*250);
+  if (spawnX < 40) spawnX = 40 + Math.random()*150;
+  if (spawnX > MAP_W - 40) spawnX = MAP_W - 40 - Math.random()*150;
+
+  const randomName = humanNames[Math.floor(Math.random() * humanNames.length)];
+  const weaponType = Math.floor(Math.random() * 3);
   
-  // Always spawn fixed perfectly on the main ground level (FLOOR_Y)
   gameState.enemies.push({
-    type: isSapa ? 'sapa' : 'bandit',
-    x: side > 0 ? -40 : W + 40,
-    y: FLOOR_Y - 45,
-    w: 28, h: 45,
-    vx: side * (isSapa ? 2.2 : 1.2),
-    vy: 0,
-    health: isSapa ? 25 : 60,
-    shootCooldown: isSapa ? 50 : 30
+    name: randomName,
+    gunIdx: weaponType,
+    x: spawnX,
+    y: FLOOR_Y - 150 - Math.random()*200, 
+    w: 34, h: 52,
+    vx: 0, vy: 0,
+    health: 100,
+    facing: 1,
+    fuel: 100,
+    shootCooldown: 50 + Math.random()*50,
+    actionTimer: 0,
+    targetMoveX: 0,
+    isJetpacking: false
   });
 }
 
@@ -353,14 +581,17 @@ function updatePlayer() {
   }
   if (p.onGround && p.fuel < JETPACK_FUEL_MAX) p.fuel = Math.min(JETPACK_FUEL_MAX, p.fuel + JETPACK_RECHARGE);
 
-  p.vy += GRAVITY; p.x += p.vx; p.y += p.vy;
-  p.onGround = false;
+  p.vy += GRAVITY; p.x += p.vx; p.y += p.vy; p.onGround = false;
   for (let plat of gameState.platforms) {
     if (p.x + p.w > plat.x && p.x < plat.x + plat.w && p.y + p.h > plat.y && p.y + p.h - p.vy <= plat.y) {
       p.y = plat.y - p.h; p.vy = 0; p.onGround = true;
     }
   }
-  if (p.x < 0) p.x = 0; if (p.x + p.w > W) p.x = W - p.w; if (p.y < 0) { p.y = 0; p.vy = 0; }
+  if (p.x < 0) p.x = 0; if (p.x + p.w > MAP_W) p.x = MAP_W - p.w; if (p.y < 0) { p.y = 0; p.vy = 0; }
+
+  camera.x = p.x - viewW / 2; camera.y = p.y - viewH / 2;
+  if (camera.x < 0) camera.x = 0; if (camera.x > MAP_W - viewW) camera.x = MAP_W - viewW;
+  if (camera.y < 0) camera.y = 0; if (camera.y > MAP_H - viewH) camera.y = MAP_H - viewH;
 }
 
 function updateBullets() {
@@ -369,43 +600,67 @@ function updateBullets() {
     for (let i = gameState.enemies.length - 1; i >= 0; i--) {
       const e = gameState.enemies[i];
       if (b.x > e.x && b.x < e.x + e.w && b.y > e.y && b.y < e.y + e.h && !b.enemy) {
-        e.health -= 20;
-        for(let j = 0; j < 5; j++) gameState.particles.push({ x: b.x, y: b.y, vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5, life: 10, r: 2, color: e.type === 'bandit' ? '#ffcc00' : '#aa0000' });
-        if (e.health <= 0) { gameState.enemies.splice(i, 1); gameState.score += 1; }
+        e.health -= b.damage || 20;
+        for(let j = 0; j < 5; j++) gameState.particles.push({ x: b.x, y: b.y, vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5, life: 10, r: 2, color: '#e94556' });
+        if (e.health <= 0) { 
+          playDeathSound();
+          gameState.enemies.splice(i, 1); gameState.score += 1; 
+        }
         return false;
       }
     }
-    return b.life > 0 && b.x > 0 && b.x < W && b.y > 0 && b.y < H;
+    return b.life > 0 && b.x > 0 && b.x < MAP_W && b.y > 0 && b.y < MAP_H;
   });
 }
 
 function updateEnemies() {
   const p = gameState.player;
+  
   gameState.enemies.forEach(e => {
-    let speedMod = e.type === 'sapa' ? 2.0 : 1.1;
-    if (e.x < p.x) e.vx = speedMod; else e.vx = -speedMod;
-    
-    e.x += e.vx;
-    // Strictly snap enemies to the primary ground layout line only
-    e.y = FLOOR_Y - e.h; 
-    e.vy = 0;
-
-    e.shootCooldown--;
-    if (e.shootCooldown <= 0 && Math.abs(e.x - p.x) < 420) {
-      const angle = Math.atan2(p.y + 20 - (e.y + 20), p.x + 16 - (e.x + 14));
-      gameState.bullets.push({ x: e.x + 14, y: e.y + 20, vx: Math.cos(angle) * (e.type === 'sapa' ? 6 : 8), vy: Math.sin(angle) * (e.type === 'sapa' ? 6 : 8), r: 2.5, life: 65, enemy: true });
-      e.shootCooldown = e.type === 'sapa' ? 80 + Math.random()*30 : 40 + Math.random()*40;
+    e.actionTimer--;
+    if (e.actionTimer <= 0) {
+      e.actionTimer = 40 + Math.random() * 60;
+      e.targetMoveX = e.x < p.x ? (Math.random() > 0.25 ? 1 : -1) : (Math.random() > 0.25 ? -1 : 1);
+      e.isJetpacking = Math.random() > 0.5 && e.y > MAP_H - 400;
     }
 
-    if (p.x < e.x + e.w && p.x + p.w > e.x && p.y < e.y + e.h && p.y + p.h > e.y) {
-      p.health -= e.type === 'bandit' ? 0.6 : 0.3;
-      if (p.health <= 0) endGame();
+    // --- Tweaked Speed Mechanics: Enemies are now slightly slower (2.2 instead of 4.2) ---
+    e.vx = e.targetMoveX * 2.2;
+    e.facing = p.x > e.x ? 1 : -1;
+
+    if (e.isJetpacking && e.fuel > 0) {
+      e.vy -= JETPACK_THRUST * 0.95; e.fuel -= 0.8;
+      if (Math.random() > 0.4) {
+        gameState.particles.push({ x: e.x + 16, y: e.y + e.h, vx: (Math.random()-0.5)*2, vy: 2 + Math.random()*2, life: 10, r: 2, color: '#ffcc00' });
+      }
+    } else { e.fuel = Math.min(100, e.fuel + 0.35); }
+
+    e.vy += GRAVITY; e.x += e.vx; e.y += e.vy;
+
+    for (let plat of gameState.platforms) {
+      if (e.x + e.w > plat.x && e.x < plat.x + plat.w && e.y + e.h > plat.y && e.y + e.h - e.vy <= plat.y) {
+        e.y = plat.y - e.h; e.vy = 0;
+      }
+    }
+    if (e.x < 0) e.x = 0; if (e.x + e.w > MAP_W) e.x = MAP_W - e.w;
+
+    e.shootCooldown--;
+    let currentGun = weapons[e.gunIdx];
+    if (e.shootCooldown <= 0 && Math.abs(e.x - p.x) < currentGun.range) {
+      const angle = Math.atan2(p.y + 20 - (e.y + 24), p.x + 16 - (e.x + 16)) + (Math.random() - 0.5) * 0.2; 
+      playShotSound(e.gunIdx);
+      gameState.bullets.push({ 
+        x: e.x + 16 + Math.cos(angle)*15, y: e.y + 24 + Math.sin(angle)*15, 
+        vx: Math.cos(angle) * currentGun.speed, vy: Math.sin(angle) * currentGun.speed, 
+        r: 3, life: Math.round(currentGun.range / currentGun.speed), enemy: true 
+      });
+      e.shootCooldown = currentGun.fireRate / 2 + 40 + Math.random()*40;
     }
   });
 
   gameState.bullets.forEach(b => {
     if (b.enemy && b.x > p.x && b.x < p.x + p.w && b.y > p.y && b.y < p.y + p.h) {
-      p.health -= 7; b.life = 0;
+      p.health -= 5; b.life = 0;
       if (p.health <= 0) endGame();
     }
   });
@@ -413,44 +668,74 @@ function updateEnemies() {
 
 function updateParticles() { gameState.particles = gameState.particles.filter(pt => { pt.x += pt.vx; pt.y += pt.vy; pt.life--; return pt.life > 0; }); }
 
-function draw() {
-  const gradient = ctx.createLinearGradient(0, 0, 0, H);
-  gradient.addColorStop(0, '#101a0e'); gradient.addColorStop(1, '#2c3e27');
-  ctx.fillStyle = gradient; ctx.fillRect(0, 0, W, H);
+function drawRadar() {
+  radarCtx.fillStyle = 'rgba(10, 24, 10, 0.9)';
+  radarCtx.fillRect(0, 0, 180, 60);
 
-  gameState.mountains.forEach(mnt => {
-    ctx.fillStyle = mnt.color;
-    ctx.beginPath();
-    ctx.moveTo(0, H);
-    for (let i = 0; i < mnt.steps.length; i++) {
-      let x = mnt.steps[i];
-      let y = mnt.base - (i % 2 === 0 ? mnt.peak : mnt.peak * 0.4) - (Math.sin(i)*15);
-      ctx.lineTo(x, y);
-    }
-    ctx.lineTo(W, H);
-    ctx.fill();
+  const scaleX = 180 / MAP_W;
+  const scaleY = 60 / MAP_H;
+
+  radarCtx.fillStyle = '#4a5e3a';
+  gameState.platforms.forEach(p => {
+    radarCtx.fillRect(p.x * scaleX, p.y * scaleY, p.w * scaleX, p.h * scaleY);
   });
 
-  ctx.fillStyle = 'rgba(20, 35, 15, 0.3)';
-  for (let i = 0; i < W; i += 90) {
-    ctx.beginPath(); ctx.arc(i, FLOOR_Y - 10, 45, 0, Math.PI, true); ctx.fill();
+  // Player radar blip
+  radarCtx.fillStyle = '#00ffcc';
+  radarCtx.beginPath();
+  radarCtx.arc(gameState.player.x * scaleX, gameState.player.y * scaleY, 3, 0, Math.PI * 2);
+  radarCtx.fill();
+
+  // Real human enemies radar blips
+  radarCtx.fillStyle = '#ff2233';
+  gameState.enemies.forEach(e => {
+    radarCtx.beginPath();
+    radarCtx.arc(e.x * scaleX, e.y * scaleY, 2.5, 0, Math.PI * 2);
+    radarCtx.fill();
+  });
+}
+
+function draw() {
+  ctx.clearRect(0,0,viewW,viewH);
+  const theme = mapThemes[activeMapIdx];
+
+  const gradient = ctx.createLinearGradient(0, 0, 0, viewH);
+  gradient.addColorStop(0, theme.skyTop); gradient.addColorStop(1, theme.skyBottom);
+  ctx.fillStyle = gradient; ctx.fillRect(0, 0, viewW, viewH);
+
+  ctx.save();
+  ctx.translate(-camera.x, -camera.y);
+
+  theme.mountains.forEach((mnt, mIdx) => {
+    ctx.fillStyle = mnt.color; ctx.beginPath(); ctx.moveTo(0, MAP_H);
+    let stepsArr = mIdx === 0 ? mountainSteps1 : mountainSteps2;
+    for (let i = 0; i < stepsArr.length; i++) {
+      let x = stepsArr[i]; let y = mnt.base - (i % 2 === 0 ? mnt.peak : mnt.peak * 0.4) - (Math.sin(i)*15);
+      ctx.lineTo(x, y);
+    }
+    ctx.lineTo(MAP_W, MAP_H); ctx.fill();
+  });
+
+  ctx.fillStyle = theme.canopy;
+  for (let i = 0; i < MAP_W; i += 120) {
+    ctx.beginPath(); ctx.arc(i, FLOOR_Y - 10, 60, 0, Math.PI, true); ctx.fill();
   }
 
   gameState.platforms.forEach(p => {
-    ctx.fillStyle = '#3a2d1f'; ctx.fillRect(p.x, p.y, p.w, p.h);
-    ctx.fillStyle = '#4c6b3e'; ctx.fillRect(p.x, p.y, p.w, 6);
+    ctx.fillStyle = theme.ground; ctx.fillRect(p.x, p.y, p.w, p.h);
+    ctx.fillStyle = theme.grass; ctx.fillRect(p.x, p.y, p.w, 6);
   });
-
   gameState.bunkers.forEach(b => { ctx.drawImage(bunkerImg, b.x, b.y, b.w, b.h); });
 
   if (gameState.player.jetpacking) {
     ctx.fillStyle = '#ff4500'; ctx.beginPath();
-    ctx.moveTo(gameState.player.x + (gameState.player.facing > 0 ? 4 : 22), gameState.player.y + 32);
-    ctx.lineTo(gameState.player.x + (gameState.player.facing > 0 ? -2 : 28), gameState.player.y + 50);
-    ctx.lineTo(gameState.player.x + (gameState.player.facing > 0 ? 10 : 16), gameState.player.y + 36);
+    ctx.moveTo(gameState.player.x + (gameState.player.facing > 0 ? 4 : 28), gameState.player.y + 36);
+    ctx.lineTo(gameState.player.x + (gameState.player.facing > 0 ? -4 : 36), gameState.player.y + 54);
+    ctx.lineTo(gameState.player.x + (gameState.player.facing > 0 ? 12 : 20), gameState.player.y + 40);
     ctx.fill();
   }
 
+  // Draw Player Avatar
   ctx.save();
   if (gameState.player.facing < 0) {
     ctx.translate(gameState.player.x + gameState.player.w, gameState.player.y); ctx.scale(-1, 1);
@@ -460,51 +745,57 @@ function draw() {
   }
   ctx.restore();
 
+  // Draw Gun
   ctx.save();
-  ctx.translate(gameState.player.x + 16, gameState.player.y + 24);
+  ctx.translate(gameState.player.x + 18, gameState.player.y + 32);
   let gunAngle = (gameState.aimX === 0 && gameState.aimY === 0) ? (gameState.player.facing > 0 ? 0 : Math.PI) : Math.atan2(gameState.aimY, gameState.aimX);
-  if (gameState.player.facing < 0) {
-    ctx.scale(1, -1);
-    ctx.rotate(-gunAngle + Math.PI);
-  } else {
-    ctx.rotate(gunAngle);
-  }
-  ctx.drawImage(rifleImg, -5, -4, 28, 10);
+  if (gameState.player.facing < 0) { ctx.scale(1, -1); ctx.rotate(-gunAngle + Math.PI); } else { ctx.rotate(gunAngle); }
+  ctx.drawImage(rifleImg, -5, -4, activeGunIdx === 2 ? 34 : 28, 10);
   ctx.restore();
 
+  // Laser Pointer Reticle
   if (Math.abs(gameState.aimX) > 0.05 || Math.abs(gameState.aimY) > 0.05) {
-    ctx.strokeStyle = 'rgba(255, 0, 50, 0.45)'; ctx.lineWidth = 1; ctx.setLineDash([5, 5]);
-    ctx.beginPath(); ctx.moveTo(gameState.player.x + 16, gameState.player.y + 24);
+    ctx.strokeStyle = activeGunIdx === 2 ? 'rgba(255, 30, 30, 0.75)' : 'rgba(0, 255, 200, 0.4)'; 
+    ctx.lineWidth = activeGunIdx === 2 ? 1.5 : 1; ctx.setLineDash([5, 5]);
+    ctx.beginPath(); ctx.moveTo(gameState.player.x + 18, gameState.player.y + 32);
     let angle = Math.atan2(gameState.aimY, gameState.aimX);
-    ctx.lineTo(gameState.player.x + 16 + Math.cos(angle) * 180, gameState.player.y + 24 + Math.sin(angle) * 180);
+    ctx.lineTo(gameState.player.x + 18 + Math.cos(angle) * weapons[activeGunIdx].range, gameState.player.y + 32 + Math.sin(angle) * weapons[activeGunIdx].range);
     ctx.stroke(); ctx.setLineDash([]);
   }
 
+  // Draw Real Human Enemies with full details
   gameState.enemies.forEach(e => {
-    if (e.type === 'bandit') {
-      ctx.fillStyle = '#6e583f'; ctx.fillRect(e.x, e.y, e.w, e.h);
-      ctx.fillStyle = '#222'; ctx.fillRect(e.x + 3, e.y, e.w - 6, 12);
-      ctx.fillStyle = '#cc0000'; ctx.font = '9px Arial'; ctx.fillText("BANDIT", e.x - 4, e.y - 16);
+    ctx.save();
+    if (e.facing < 0) {
+      ctx.translate(e.x + e.w, e.y); ctx.scale(-1, 1);
+      ctx.drawImage(humanEnemyImg, 0, 0, e.w, e.h);
     } else {
-      ctx.fillStyle = '#839b78'; ctx.fillRect(e.x, e.y, e.w, e.h);
-      ctx.fillStyle = '#412b15'; ctx.fillRect(e.x + 5, e.y, e.w - 10, 11);
-      ctx.fillStyle = '#ff9900'; ctx.font = '9px Arial'; ctx.fillText("SAPA", e.x + 2, e.y - 16);
+      ctx.drawImage(humanEnemyImg, e.x, e.y, e.w, e.h);
     }
-    
-    ctx.fillStyle = '#111'; ctx.fillRect(e.x - 2, e.y + 20, e.w + 4, 4);
+    ctx.restore();
 
-    let maxHp = e.type === 'bandit' ? 60 : 25;
-    ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(e.x - 2, e.y - 10, e.w + 4, 4);
-    ctx.fillStyle = e.type === 'bandit' ? '#ffcc00' : '#ff3333';
-    ctx.fillRect(e.x - 2, e.y - 10, (e.w + 4) * (e.health/maxHp), 4);
+    // Player name labels
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 10px Arial';
+    ctx.textAlign = 'center';
+    ctx.textShadow = '1px 1px 2px #000';
+    ctx.fillText(e.name, e.x + e.w/2, e.y - 16);
+
+    // Health UI
+    ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(e.x - 4, e.y - 8, e.w + 8, 3.5);
+    ctx.fillStyle = '#00ffcc'; ctx.fillRect(e.x - 4, e.y - 8, (e.w + 8) * (e.health/100), 3.5);
   });
 
-  gameState.bullets.forEach(b => { ctx.fillStyle = b.enemy ? '#ff4444' : '#00ffff'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill(); });
+  gameState.bullets.forEach(b => { ctx.fillStyle = b.enemy ? '#ff3333' : weapons[activeGunIdx].color; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill(); });
   gameState.particles.forEach(pt => { ctx.fillStyle = pt.color; ctx.globalAlpha = Math.max(0, pt.life / 15); ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.r, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; });
+
+  ctx.restore();
 
   document.getElementById('healthBarFill').style.width = Math.max(0, gameState.player.health) + '%';
   document.getElementById('fuelFill').style.width = (gameState.player.fuel / JETPACK_FUEL_MAX * 100) + '%';
   document.getElementById('score').textContent = gameState.score;
+
+  drawRadar();
 }
 
 let enemySpawnTimer = 0;
@@ -512,7 +803,7 @@ function gameLoop() {
   if (!gameState.gameOver) {
     updatePlayer(); updateBullets(); updateEnemies(); updateParticles();
     enemySpawnTimer--;
-    if (enemySpawnTimer <= 0) { spawnEnemy(); enemySpawnTimer = 100 - Math.min(gameState.score * 2, 55); }
+    if (enemySpawnTimer <= 0) { spawnEnemy(); enemySpawnTimer = 140 - Math.min(gameState.score * 3, 60); }
   }
   draw();
   requestAnimationFrame(gameLoop);
@@ -526,13 +817,13 @@ function endGame() {
 }
 
 function restartGame() {
-  gameState.player = { x: 150, y: FLOOR_Y - 50, w: 32, h: 50, vx: 0, vy: 0, speed: 4.5, jumpPower: 9, onGround: false, health: 100, facing: 1, fuel: JETPACK_FUEL_MAX, jetpacking: false };
+  gameState.player = { x: 400, y: FLOOR_Y - 60, w: 34, h: 52, vx: 0, vy: 0, speed: 5.0, jumpPower: 9.5, onGround: false, health: 100, facing: 1, fuel: JETPACK_FUEL_MAX, jetpacking: false };
   gameState.bullets = []; gameState.enemies = []; gameState.particles = []; gameState.score = 0; gameState.moveX = 0; gameState.moveY = 0; gameState.aimX = 0; gameState.aimY = 0; gameState.gameOver = false;
   document.getElementById('gameOver').style.display = 'none';
-  enemySpawnTimer = 40;
+  enemySpawnTimer = 20;
 }
 
-enemySpawnTimer = 40;
+enemySpawnTimer = 20;
 gameLoop();
 </script>
 </body>
