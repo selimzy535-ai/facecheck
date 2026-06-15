@@ -2,829 +2,585 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Mini Militia 2D - Outpost Royale Real Avatar Edition</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; touch-action: none; }
-  body {
-    background: #0f140d;
-    font-family: 'Arial Black', Gadget, sans-serif;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-  }
-  #gameContainer {
-    position: relative;
-    box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
-    width: 100vw;
-    height: 100vh;
-    background: #192215;
-    overflow: hidden;
-  }
-  canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
-  }
-  #hud {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    color: #fff;
-    font-weight: bold;
-    text-shadow: 2px 2px 0px #000;
-    z-index: 10;
-    font-size: 11px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    background: rgba(30, 45, 25, 0.8);
-    padding: 8px;
-    border: 2px solid #3b5323;
-    border-radius: 4px;
-    min-width: 140px;
-  }
-  .hud-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .bar-container {
-    width: 80px;
-    height: 8px;
-    background: #222;
-    border: 1px solid #fff;
-    overflow: hidden;
-  }
-  #healthBarFill { height: 100%; background: #ff2222; width: 100%; }
-  #fuelFill { height: 100%; background: #00ffcc; width: 100%; }
-
-  #minimapContainer {
-    position: absolute;
-    top: 55px;
-    right: 12px;
-    width: 180px;
-    height: 60px;
-    background: rgba(10, 20, 10, 0.85);
-    border: 2px solid #3b5323;
-    border-radius: 4px;
-    z-index: 15;
-    overflow: hidden;
-    box-shadow: 0 0 10px rgba(0,0,0,0.5);
-  }
-  #radarCanvas {
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
-
-  #topSelectors {
-    position: absolute;
-    top: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 15px;
-    z-index: 15;
-    background: rgba(15, 22, 12, 0.6);
-    padding: 6px 12px;
-    border-radius: 20px;
-    border: 1px solid rgba(255,255,255,0.15);
-    backdrop-filter: blur(2px);
-  }
-  .selector-group {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-  .selector-group span {
-    color: #aaa;
-    font-size: 10px;
-    text-shadow: 1px 1px #000;
-  }
-  .top-btn {
-    background: #25331e;
-    border: 1.5px solid #4a6637;
-    color: #fff;
-    padding: 4px 10px;
-    font-size: 10px;
-    font-weight: bold;
-    border-radius: 4px;
-    cursor: pointer;
-    text-transform: uppercase;
-  }
-  .top-btn.active {
-    background: #e94556;
-    border-color: #fff;
-    box-shadow: 0 0 5px #e94556;
-  }
-  
-  #gameOver {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(15, 22, 12, 0.95);
-    border: 4px solid #3b5323;
-    color: #fff;
-    padding: 25px 40px;
-    border-radius: 8px;
-    text-align: center;
-    display: none;
-    z-index: 20;
-    box-shadow: 0 0 20px #000;
-  }
-  #gameOver h2 { margin-bottom: 12px; color: #ffcc00; text-transform: uppercase; }
-  #gameOver button {
-    margin-top: 12px;
-    padding: 8px 16px;
-    font-size: 14px;
-    background: #3b5323;
-    border: 2px solid #fff;
-    color: #fff;
-    font-weight: bold;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-
-  #controls {
-    position: absolute;
-    bottom: 25px;
-    left: 0;
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    padding: 0 40px;
-    z-index: 15;
-    pointer-events: none;
-  }
-  .btn-group {
-    display: flex;
-    align-items: center;
-    pointer-events: all;
-  }
-  
-  .joystick-outer {
-    width: 95px;
-    height: 95px;
-    background: rgba(0, 0, 0, 0.3);
-    border: 2.5px dashed rgba(255, 255, 255, 0.35);
-    border-radius: 50%;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(1px);
-  }
-  .joystick-center {
-    width: 38px;
-    height: 38px;
-    background: radial-gradient(circle, #7fa27f 0%, #203520 100%);
-    border: 1.5px solid #fff;
-    border-radius: 50%;
-    position: absolute;
-    box-shadow: 0 3px 6px rgba(0,0,0,0.5);
-  }
-  #aimOuter { border: 2.5px solid rgba(233, 69, 96, 0.4); }
-  #aimCenter { background: radial-gradient(circle, #ff526c 0%, #801a27 100%); }
-
-  #newGameBtn {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    padding: 6px 12px;
-    background: #273822;
-    border: 2px solid #3b5323;
-    color: #fff;
-    border-radius: 4px;
-    cursor: pointer;
-    z-index: 15;
-    font-weight: bold;
-    text-transform: uppercase;
-    font-size: 11px;
-  }
-
-  @media (min-width: 768px) {
-    body::before {
-      content: "Mobile Only Game 📱\A Open this on your phone or use Mobile View";
-      white-space: pre;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: #0f140d; color: #fff;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 22px; text-align: center; z-index: 9999;
-    }
-    #gameContainer { display: none!important; }
-  }
-</style>
-</head>
-<body>
-<div id="gameContainer">
-  <canvas id="game"></canvas>
-  
-  <div id="topSelectors">
-    <div class="selector-group">
-      <span>MAP:</span>
-      <button class="top-btn active" id="btnMap0" onclick="changeMap(0)">Jungle</button>
-      <button class="top-btn" id="btnMap1" onclick="changeMap(1)">Desert</button>
-      <button class="top-btn" id="btnMap2" onclick="changeMap(2)">Catacomb</button>
-    </div>
-    <div class="selector-group">
-      <span>GUN:</span>
-      <button class="top-btn active" id="btnGun0" onclick="changeGun(0)">Rifle</button>
-      <button class="top-btn" id="btnGun1" onclick="changeGun(1)">Uzi</button>
-      <button class="top-btn" id="btnGun2" onclick="changeGun(2)">Sniper</button>
-    </div>
-  </div>
-
-  <div id="minimapContainer">
-    <canvas id="radarCanvas" width="180" height="60"></canvas>
-  </div>
-
-  <button id="newGameBtn" onclick="restartGame()">Reset</button>
-  
-  <div id="hud">
-    <div class="hud-row"><span>HEALTH:</span> <div class="bar-container"><div id="healthBarFill"></div></div></div>
-    <div class="hud-row"><span>BOOST:</span> <div class="bar-container"><div id="fuelFill"></div></div></div>
-    <div class="hud-row"><span>KILLS:</span> <span id="score">0</span></div>
-  </div>
-
-  <div id="controls">
-    <div class="btn-group">
-      <div class="joystick-outer" id="movePad">
-        <div class="joystick-center" id="moveStick"></div>
-      </div>
-    </div>
-    <div class="btn-group">
-      <div class="joystick-outer" id="aimOuter">
-        <div class="joystick-center" id="aimCenter"></div>
-      </div>
-    </div>
-  </div>
-
-  <div id="gameOver">
-    <h2>Wasted</h2>
-    <p>Kills: <span id="finalScore">0</span></p>
-    <button onclick="restartGame()">Respawn</button>
-  </div>
-</div>
-
-<script>
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-const radarCanvas = document.getElementById('radarCanvas');
-const radarCtx = radarCanvas.getContext('2d');
-
-const MAP_W = 3200; 
-const MAP_H = 1000;
-let viewW = window.innerWidth;
-let viewH = window.innerHeight;
-
-function resizeCanvas() {
-  viewW = window.innerWidth; viewH = window.innerHeight;
-  canvas.width = viewW; canvas.height = viewH;
-}
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
-
-let camera = { x: 0, y: 0 };
-
-// --- Audio Engine ---
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-function playShotSound(gunType) {
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-  let duration = 0.1; let frequency = 400; let volume = 0.4;
-  if(gunType === 1) { duration = 0.06; frequency = 600; volume = 0.25; } 
-  else if(gunType === 2) { duration = 0.25; frequency = 180; volume = 0.6; }
-
-  const bufferSize = audioCtx.sampleRate * duration;
-  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
-  
-  const noise = audioCtx.createBufferSource();
-  noise.buffer = buffer;
-  const filter = audioCtx.createBiquadFilter();
-  filter.type = 'bandpass';
-  filter.frequency.setValueAtTime(frequency, audioCtx.currentTime);
-  filter.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + (duration * 0.9));
-  
-  const gain = audioCtx.createGain();
-  gain.gain.setValueAtTime(volume, audioCtx.currentTime);
-  gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-  
-  noise.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
-  noise.start();
-}
-
-function playDeathSound() {
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-  const time = audioCtx.currentTime;
-  const osc1 = audioCtx.createOscillator(); const osc2 = audioCtx.createOscillator();
-  const gainNode = audioCtx.createGain(); const filter = audioCtx.createBiquadFilter();
-  osc1.type = 'sawtooth'; osc2.type = 'triangle';
-  osc1.frequency.setValueAtTime(130, time); osc1.frequency.exponentialRampToValueAtTime(65, time + 0.22);
-  osc2.frequency.setValueAtTime(133, time); osc2.frequency.exponentialRampToValueAtTime(67, time + 0.22);
-  filter.type = 'lowpass'; filter.frequency.setValueAtTime(350, time); filter.frequency.exponentialRampToValueAtTime(110, time + 0.2);
-  gainNode.gain.setValueAtTime(0.5, time); gainNode.gain.linearRampToValueAtTime(0.3, time + 0.08); gainNode.gain.linearRampToValueAtTime(0.01, time + 0.24);
-  osc1.connect(filter); osc2.connect(filter); filter.connect(gainNode); gainNode.connect(audioCtx.destination);
-  osc1.start(time); osc2.start(time); osc1.stop(time + 0.25); osc2.stop(time + 0.25);
-}
-
-const GRAVITY = 0.45;
-const FLOOR_Y = MAP_H - 70;
-const JETPACK_THRUST = 0.58;
-const JETPACK_FUEL_MAX = 100;
-const JETPACK_DRAIN = 0.5;
-const JETPACK_RECHARGE = 0.45;
-
-const bunkerSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 100"><rect x="5" y="30" width="110" height="70" fill="#4a5343" stroke="#2d3329" stroke-width="3"/><rect x="0" y="20" width="120" height="12" fill="#2d3329"/><rect x="45" y="55" width="30" height="45" fill="#1b1f19"/><rect x="15" y="42" width="20" height="15" fill="#111" stroke="#2d3329" stroke-width="2"/><rect x="85" y="42" width="20" height="15" fill="#111" stroke="#2d3329" stroke-width="2"/></svg>`;
-const bunkerImg = new Image(); bunkerImg.src = 'data:image/svg+xml;base64,' + btoa(bunkerSVG);
-
-// --- High Detail Human Avatars (Mini Militia Bobble Style with Eyes, Nose, Real Body Form) ---
-const playerHumanSVG = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 60">
-  <path d="M8,15 C8,4 32,4 32,15 L32,18 L8,18 Z" fill="#455a64" stroke="#263238" stroke-width="1.5"/>
-  <rect x="6" y="16" width="28" height="3" fill="#37474f" rx="1"/>
-  <circle cx="20" cy="22" r="9" fill="#ffcc99"/>
-  <ellipse cx="23" cy="21" rx="1.5" ry="2" fill="#fff"/>
-  <circle cx="23.5" cy="21" r="0.8" fill="#111"/>
-  <ellipse cx="17" cy="21" rx="1.5" ry="2" fill="#fff"/>
-  <circle cx="16.5" cy="21" r="0.8" fill="#111"/>
-  <path d="M19.5,21 L20.5,23 L19.5,24" stroke="#e0a070" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-  <path d="M18,27 Q20,29 22,27" stroke="#b26a50" stroke-width="1.5" fill="none"/>
-  <rect x="11" y="31" width="18" height="18" fill="#2e7d32" rx="4" stroke="#1b5e20" stroke-width="1.5"/>
-  <rect x="13" y="33" width="14" height="12" fill="#1b5e20" rx="1"/>
-  <rect x="11" y="45" width="18" height="3" fill="#3e2723"/>
-  <rect x="13" y="49" width="5" height="10" fill="#37474f"/>
-  <rect x="11" y="56" width="7" height="4" fill="#212121" rx="1"/>
-  <rect x="22" y="49" width="5" height="10" fill="#37474f"/>
-  <rect x="22" y="56" width="7" height="4" fill="#212121" rx="1"/>
-</svg>`;
-const playerImg = new Image(); playerImg.src = 'data:image/svg+xml;base64,' + btoa(playerHumanSVG);
-
-const enemyHumanSVG = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 60">
-  <path d="M9,13 Q20,7 31,13 L31,17 L9,17 Z" fill="#d32f2f"/>
-  <rect x="7" y="15" width="26" height="3" fill="#b71c1c"/>
-  <circle cx="20" cy="22" r="9" fill="#ffdbac"/>
-  <path d="M15,18 L19,20" stroke="#111" stroke-width="1.5"/>
-  <path d="M25,18 L21,20" stroke="#111" stroke-width="1.5"/>
-  <ellipse cx="17" cy="22" rx="1.5" ry="1.8" fill="#fff"/>
-  <circle cx="17.5" cy="22" r="0.7" fill="#111"/>
-  <ellipse cx="23" cy="22" rx="1.5" ry="1.8" fill="#fff"/>
-  <circle cx="22.5" cy="22" r="0.7" fill="#111"/>
-  <path d="M19.5,22 L20.5,24 L19.5,25" stroke="#d4a373" stroke-width="1.5" fill="none"/>
-  <line x1="17" y1="27" x2="23" y2="27" stroke="#111" stroke-width="1.5"/>
-  <rect x="11" y="31" width="18" height="18" fill="#f57c00" rx="3" stroke="#e65100" stroke-width="1.5"/>
-  <rect x="14" y="34" width="12" height="10" fill="#bf360c" rx="1"/>
-  <rect x="13" y="49" width="5" height="10" fill="#263238"/>
-  <rect x="11" y="56" width="7" height="4" fill="#111" rx="1"/>
-  <rect x="22" y="49" width="5" height="10" fill="#263238"/>
-  <rect x="22" y="56" width="7" height="4" fill="#111" rx="1"/>
-</svg>`;
-const humanEnemyImg = new Image(); humanEnemyImg.src = 'data:image/svg+xml;base64,' + btoa(enemyHumanSVG);
-
-const weapons = [
-  { name: 'Rifle', fireRate: 140, damage: 20, speed: 15, range: 450, color: '#00ffff', svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 15"><rect x="0" y="6" width="12" height="6" fill="#5c4033"/><rect x="10" y="3" width="28" height="5" fill="#222"/><rect x="15" y="8" width="5" height="5" fill="#111"/><rect x="38" y="4" width="7" height="2" fill="#444"/></svg>` },
-  { name: 'Uzi', fireRate: 80, damage: 10, speed: 18, range: 350, color: '#ffff00', svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 35 15"><rect x="5" y="4" width="18" height="6" fill="#444"/><rect x="8" y="9" width="4" height="6" fill="#222"/><rect x="22" y="5" width="10" height="2" fill="#111"/></svg>` },
-  { name: 'Sniper', fireRate: 650, damage: 65, speed: 26, range: 800, color: '#ff2266', svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 55 15"><rect x="0" y="5" width="15" height="5" fill="#2d3329"/><rect x="14" y="4" width="35" height="3" fill="#111"/><rect x="18" y="1" width="10" height="3" fill="#222"/><rect x="48" y="4" width="7" height="1" fill="#aaa"/></svg>` }
-];
-
-let activeGunIdx = 0;
-let rifleImg = new Image(); rifleImg.src = 'data:image/svg+xml;base64,' + btoa(weapons[activeGunIdx].svg);
-
-const mapThemes = [
-  { id: 0, skyTop: '#101a0e', skyBottom: '#2c3e27', ground: '#3a2d1f', grass: '#4c6b3e', canopy: 'rgba(20, 35, 15, 0.3)', mountains: [{ base: 650, peak: 180, color: '#131e10' }, { base: 500, peak: 260, color: '#1b2b17' }] },
-  { id: 1, skyTop: '#2b1f15', skyBottom: '#5c4028', ground: '#543d2b', grass: '#b08343', canopy: 'rgba(92, 64, 40, 0.25)', mountains: [{ base: 620, peak: 150, color: '#382617' }, { base: 480, peak: 220, color: '#4a3420' }] },
-  { id: 2, skyTop: '#080812', skyBottom: '#181528', ground: '#1f1e2e', grass: '#483d8a', canopy: 'rgba(40, 30, 90, 0.2)', mountains: [{ base: 680, peak: 200, color: '#0e0c17' }, { base: 530, peak: 290, color: '#141224' }] }
-];
-let activeMapIdx = 0;
-
-let mountainSteps1 = [0, 300, 700, 1100, 1500, 1900, 2300, 2700, 3200];
-let mountainSteps2 = [0, 200, 500, 900, 1300, 1700, 2100, 2500, 2900, 3200];
-
-const humanNames = ["Slayer_X", "NoobMaster", "MilitiaGod", "Shadow Ninja", "Alpha_Striker", "GhostRider", "BulletStorm", "Vortex", "Savage_King", "Phoenix_Rx"];
-
-let gameState = {
-  player: { x: 400, y: FLOOR_Y - 60, w: 34, h: 52, vx: 0, vy: 0, speed: 5.0, jumpPower: 9.5, onGround: false, health: 100, facing: 1, fuel: JETPACK_FUEL_MAX, jetpacking: false },
-  bullets: [], enemies: [], particles: [], score: 0, moveX: 0, moveY: 0, aimX: 0, aimY: 0, gameOver: false,
-  platforms: [
-    {x: 0, y: FLOOR_Y, w: MAP_W, h: 70}, 
-    {x: 230, y: MAP_H - 220, w: 220, h: 25},
-    {x: 580, y: MAP_H - 340, w: 280, h: 25},
-    {x: 1000, y: MAP_H - 200, w: 300, h: 25},
-    {x: 1450, y: MAP_H - 360, w: 400, h: 25},
-    {x: 2000, y: MAP_H - 240, w: 260, h: 25},
-    {x: 2400, y: MAP_H - 400, w: 350, h: 25}
-  ],
-  bunkers: [
-    {x: 100, y: FLOOR_Y - 100, w: 120, h: 100}, {x: 1100, y: FLOOR_Y - 100, w: 120, h: 100},
-    {x: 2200, y: FLOOR_Y - 100, w: 120, h: 100}, {x: 2900, y: FLOOR_Y - 100, w: 120, h: 100}
-  ]
-};
-
-function changeMap(idx) {
-  activeMapIdx = idx;
-  for(let i=0; i<3; i++) document.getElementById('btnMap'+i).classList.remove('active');
-  document.getElementById('btnMap'+idx).classList.add('active');
-}
-
-function changeGun(idx) {
-  activeGunIdx = idx;
-  rifleImg.src = 'data:image/svg+xml;base64,' + btoa(weapons[idx].svg);
-  for(let i=0; i<3; i++) document.getElementById('btnGun'+i).classList.remove('active');
-  document.getElementById('btnGun'+idx).classList.add('active');
-  if(aimActive) {
-    clearInterval(shootInterval);
-    shootInterval = setInterval(shoot, weapons[activeGunIdx].fireRate);
-  }
-}
-
-// --- Joysticks ---
-const movePad = document.getElementById('movePad');
-const moveStick = document.getElementById('moveStick');
-let moveActive = false;
-const moveCenterX = 47.5, moveCenterY = 47.5, moveMaxDist = 35;
-
-function updateMove(e) {
-  const rect = movePad.getBoundingClientRect();
-  let clientX = e.touches ? e.touches[0].clientX : e.clientX;
-  let clientY = e.touches ? e.touches[0].clientY : e.clientY;
-  if (e.touches && e.touches.length > 1) {
-    for (let i=0; i<e.touches.length; i++) {
-      let tRect = movePad.getBoundingClientRect();
-      if (e.touches[i].clientX >= tRect.left && e.touches[i].clientX <= tRect.right) {
-        clientX = e.touches[i].clientX; clientY = e.touches[i].clientY;
-      }
-    }
-  }
-  let dx = (clientX - rect.left) - moveCenterX;
-  let dy = (clientY - rect.top) - moveCenterY;
-  let dist = Math.sqrt(dx*dx + dy*dy);
-  if (dist > moveMaxDist) { dx = (dx / dist) * moveMaxDist; dy = (dy / dist) * moveMaxDist; }
-  moveStick.style.left = (moveCenterX + dx - 19) + 'px';
-  moveStick.style.top = (moveCenterY + dy - 19) + 'px';
-  gameState.moveX = dx / moveMaxDist; gameState.moveY = dy / moveMaxDist;
-}
-movePad.addEventListener('touchstart', e => { e.preventDefault(); moveActive = true; updateMove(e); });
-movePad.addEventListener('touchmove', e => { e.preventDefault(); if (moveActive) updateMove(e); });
-movePad.addEventListener('touchend', e => { 
-  e.preventDefault(); moveActive = false; moveStick.style.left = '28.5px'; moveStick.style.top = '28.5px'; gameState.moveX = 0; gameState.moveY = 0; 
-});
-
-const aimOuter = document.getElementById('aimOuter');
-const aimCenter = document.getElementById('aimCenter');
-let aimActive = false;
-const aimCenterX = 47.5, aimCenterY = 47.5, aimMaxDist = 35;
-let shootInterval = null;
-
-function updateAim(e) {
-  const rect = aimOuter.getBoundingClientRect();
-  let clientX = e.touches ? e.touches[0].clientX : e.clientX;
-  let clientY = e.touches ? e.touches[0].clientY : e.clientY;
-  if (e.touches && e.touches.length > 1) {
-    for (let i=0; i<e.touches.length; i++) {
-      let tRect = aimOuter.getBoundingClientRect();
-      if (e.touches[i].clientX >= tRect.left && e.touches[i].clientX <= tRect.right) {
-        clientX = e.touches[i].clientX; clientY = e.touches[i].clientY;
-      }
-    }
-  }
-  let dx = (clientX - rect.left) - aimCenterX;
-  let dy = (clientY - rect.top) - aimCenterY;
-  let dist = Math.sqrt(dx*dx + dy*dy);
-  if (dist > aimMaxDist) { dx = (dx / dist) * aimMaxDist; dy = (dy / dist) * aimMaxDist; }
-  aimCenter.style.left = (aimCenterX + dx - 19) + 'px';
-  aimCenter.style.top = (aimCenterY + dy - 19) + 'px';
-  gameState.aimX = dx / aimMaxDist; gameState.aimY = dy / aimMaxDist;
-  if (Math.abs(gameState.aimX) > 0.1) gameState.player.facing = gameState.aimX >= 0 ? 1 : -1;
-}
-aimOuter.addEventListener('touchstart', e => { 
-  e.preventDefault(); aimActive = true; updateAim(e); 
-  if(!shootInterval) shootInterval = setInterval(shoot, weapons[activeGunIdx].fireRate);
-});
-aimOuter.addEventListener('touchmove', e => { e.preventDefault(); if (aimActive) updateAim(e); });
-aimOuter.addEventListener('touchend', e => { 
-  e.preventDefault(); aimActive = false; aimCenter.style.left = '28.5px'; aimCenter.style.top = '28.5px'; gameState.aimX = 0; gameState.aimY = 0; 
-  clearInterval(shootInterval); shootInterval = null;
-});
-
-function shoot() {
-  if (gameState.gameOver) return;
-  const p = gameState.player;
-  if (gameState.aimX === 0 && gameState.aimY === 0) return;
-  let angle = Math.atan2(gameState.aimY, gameState.aimX);
-  
-  const currentGun = weapons[activeGunIdx];
-  playShotSound(activeGunIdx);
-  
-  gameState.bullets.push({ 
-    x: p.x + 16 + Math.cos(angle)*15, y: p.y + 22 + Math.sin(angle)*15, 
-    vx: Math.cos(angle) * currentGun.speed, vy: Math.sin(angle) * currentGun.speed, 
-    r: activeGunIdx === 2 ? 4 : 3, life: Math.round(currentGun.range / currentGun.speed),
-    damage: currentGun.damage, enemy: false 
-  });
-  
-  for(let i = 0; i < 2; i++) {
-    gameState.particles.push({ x: p.x + 16 + Math.cos(angle)*15, y: p.y + 22 + Math.sin(angle)*15, vx: Math.cos(angle) * 4 + (Math.random()-0.5)*2, vy: Math.sin(angle) * 4 + (Math.random()-0.5)*2, life: 6, r: 2, color: currentGun.color });
-  }
-}
-
-function spawnEnemy() {
-  const p = gameState.player;
-  let spawnX = Math.random() > 0.5 ? p.x + (viewW/2 + 150 + Math.random()*250) : p.x - (viewW/2 + 150 + Math.random()*250);
-  if (spawnX < 40) spawnX = 40 + Math.random()*150;
-  if (spawnX > MAP_W - 40) spawnX = MAP_W - 40 - Math.random()*150;
-
-  const randomName = humanNames[Math.floor(Math.random() * humanNames.length)];
-  const weaponType = Math.floor(Math.random() * 3);
-  
-  gameState.enemies.push({
-    name: randomName,
-    gunIdx: weaponType,
-    x: spawnX,
-    y: FLOOR_Y - 150 - Math.random()*200, 
-    w: 34, h: 52,
-    vx: 0, vy: 0,
-    health: 100,
-    facing: 1,
-    fuel: 100,
-    shootCooldown: 50 + Math.random()*50,
-    actionTimer: 0,
-    targetMoveX: 0,
-    isJetpacking: false
-  });
-}
-
-function updatePlayer() {
-  const p = gameState.player;
-  if (Math.abs(gameState.moveX) > 0.15) {
-    p.vx = gameState.moveX * p.speed;
-    if (Math.abs(gameState.aimX) <= 0.1) p.facing = p.vx >= 0 ? 1 : -1;
-  } else { p.vx *= 0.75; }
-
-  p.jetpacking = false;
-  if (gameState.moveY < -0.35) {
-    if (p.onGround) { p.vy = -p.jumpPower; p.onGround = false; }
-    else if (p.fuel > 0) {
-      p.vy -= JETPACK_THRUST; p.fuel -= JETPACK_DRAIN; p.jetpacking = true;
-      if (Math.random() > 0.2) {
-        gameState.particles.push({ x: p.x + 16 + (Math.random()-0.5)*6, y: p.y + p.h, vx: p.vx * 0.4 + (Math.random()-0.5)*2, vy: 3 + Math.random()*2, life: 12, r: 2 + Math.random()*2, color: '#ff6600' });
-      }
-    }
-  }
-  if (p.onGround && p.fuel < JETPACK_FUEL_MAX) p.fuel = Math.min(JETPACK_FUEL_MAX, p.fuel + JETPACK_RECHARGE);
-
-  p.vy += GRAVITY; p.x += p.vx; p.y += p.vy; p.onGround = false;
-  for (let plat of gameState.platforms) {
-    if (p.x + p.w > plat.x && p.x < plat.x + plat.w && p.y + p.h > plat.y && p.y + p.h - p.vy <= plat.y) {
-      p.y = plat.y - p.h; p.vy = 0; p.onGround = true;
-    }
-  }
-  if (p.x < 0) p.x = 0; if (p.x + p.w > MAP_W) p.x = MAP_W - p.w; if (p.y < 0) { p.y = 0; p.vy = 0; }
-
-  camera.x = p.x - viewW / 2; camera.y = p.y - viewH / 2;
-  if (camera.x < 0) camera.x = 0; if (camera.x > MAP_W - viewW) camera.x = MAP_W - viewW;
-  if (camera.y < 0) camera.y = 0; if (camera.y > MAP_H - viewH) camera.y = MAP_H - viewH;
-}
-
-function updateBullets() {
-  gameState.bullets = gameState.bullets.filter(b => {
-    b.x += b.vx; b.y += b.vy; b.life--;
-    for (let i = gameState.enemies.length - 1; i >= 0; i--) {
-      const e = gameState.enemies[i];
-      if (b.x > e.x && b.x < e.x + e.w && b.y > e.y && b.y < e.y + e.h && !b.enemy) {
-        e.health -= b.damage || 20;
-        for(let j = 0; j < 5; j++) gameState.particles.push({ x: b.x, y: b.y, vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5, life: 10, r: 2, color: '#e94556' });
-        if (e.health <= 0) { 
-          playDeathSound();
-          gameState.enemies.splice(i, 1); gameState.score += 1; 
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MegaTools Arcade & Naija Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://vjs.zencdn.net/7.20.3/video-js.css" rel="stylesheet" />
+    <style>
+        /* Precision scroll snapping to isolate exactly one card per scroll gesture */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scroll-width: none; }
+        .reel-container { 
+            scroll-snap-type: y mandatory; 
+            overflow-y: scroll;
         }
-        return false;
-      }
-    }
-    return b.life > 0 && b.x > 0 && b.x < MAP_W && b.y > 0 && b.y < MAP_H;
-  });
-}
+        .reel-card { 
+            scroll-snap-align: start; 
+            scroll-snap-stop: always;
+        }
+    </style>
+    <script id="aclib" type="text/javascript" src="//acscdn.com/script/aclib.js"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col overflow-x-hidden select-none">
 
-function updateEnemies() {
-  const p = gameState.player;
-  
-  gameState.enemies.forEach(e => {
-    e.actionTimer--;
-    if (e.actionTimer <= 0) {
-      e.actionTimer = 40 + Math.random() * 60;
-      e.targetMoveX = e.x < p.x ? (Math.random() > 0.25 ? 1 : -1) : (Math.random() > 0.25 ? -1 : 1);
-      e.isJetpacking = Math.random() > 0.5 && e.y > MAP_H - 400;
-    }
+    <script type="text/javascript">
+        window.addEventListener('load', () => {
+            if(typeof aclib !== 'undefined') {
+                aclib.runInterstitial({ zoneId: '11402770' });
+                aclib.runInPagePush({ zoneId: '11453602', maxAds: 2 });
+                aclib.runVideoSlider({ zoneId: '11402794' });
+            }
+        });
+    </script>
 
-    // --- Tweaked Speed Mechanics: Enemies are now slightly slower (2.2 instead of 4.2) ---
-    e.vx = e.targetMoveX * 2.2;
-    e.facing = p.x > e.x ? 1 : -1;
+    <div class="w-full bg-gray-950 p-1.5 flex justify-center items-center border-b border-gray-800 shrink-0 sticky top-0 z-50">
+        <div class="text-center w-full max-w-[300px]">
+            <span class="text-[9px] text-gray-600 tracking-widest block">SPONSORED ADVERTISEMENT</span>
+            <div id="banner-top-slot">
+                <script type="text/javascript">
+                    if(typeof aclib !== 'undefined') { aclib.runBanner({ zoneId: '11453674' }); }
+                </script>
+            </div>
+        </div>
+    </div>
 
-    if (e.isJetpacking && e.fuel > 0) {
-      e.vy -= JETPACK_THRUST * 0.95; e.fuel -= 0.8;
-      if (Math.random() > 0.4) {
-        gameState.particles.push({ x: e.x + 16, y: e.y + e.h, vx: (Math.random()-0.5)*2, vy: 2 + Math.random()*2, life: 10, r: 2, color: '#ffcc00' });
-      }
-    } else { e.fuel = Math.min(100, e.fuel + 0.35); }
+    <main class="flex-1 flex flex-col min-w-0 w-full overflow-hidden relative">
+        <div class="flex-1 overflow-y-auto w-full pb-24">
+            
+            <section id="mod-reels" class="tab-content block h-[calc(100vh-160px)] max-w-md mx-auto px-2 pt-2">
+                <div class="w-full h-full bg-black rounded-3xl border border-gray-800 overflow-hidden relative">
+                    <div id="reelsContainer" class="w-full h-full reel-container no-scrollbar">
+                        </div>
+                </div>
+            </section>
 
-    e.vy += GRAVITY; e.x += e.vx; e.y += e.vy;
+            <section id="mod-converter" class="tab-content hidden p-4 max-w-2xl mx-auto space-y-4">
+                <div class="bg-gray-800 p-5 rounded-2xl border border-gray-700 shadow-xl">
+                    <h2 class="text-xl font-bold border-b border-gray-700 pb-2 text-emerald-400"><i class="fa-solid fa-coins mr-2"></i>Currency & Unit Matrix</h2>
+                    <div class="space-y-6 mt-4">
+                        <div class="bg-gray-900 p-4 rounded-xl border border-gray-700">
+                            <h3 class="text-sm font-semibold text-gray-300 mb-3">Live Currency Exchange</h3>
+                            <div class="space-y-3">
+                                <div class="flex">
+                                    <input type="number" id="currAmount" value="1" class="w-full bg-gray-800 border border-gray-600 rounded-l-lg p-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+                                    <select id="currFrom" class="bg-gray-700 border border-gray-600 rounded-r-lg p-2 text-sm text-white focus:outline-none"></select>
+                                </div>
+                                <div class="text-center"><i class="fa-solid fa-right-left text-emerald-500 cursor-pointer transform rotate-90" onclick="swapCurrency()"></i></div>
+                                <div class="flex">
+                                    <input type="text" id="currResult" readonly class="w-full bg-gray-800 border border-gray-600 rounded-l-lg p-2 text-sm text-emerald-400 font-bold focus:outline-none">
+                                    <select id="currTo" class="bg-gray-700 border border-gray-600 rounded-r-lg p-2 text-sm text-white focus:outline-none"></select>
+                                </div>
+                                <button onclick="performCurrencyConversion()" class="w-full bg-emerald-600 hover:bg-emerald-700 py-2.5 rounded-lg text-sm font-bold transition-all">Convert Rates</button>
+                            </div>
+                        </div>
+                        <div class="bg-gray-900 p-4 rounded-xl border border-gray-700">
+                            <h3 class="text-sm font-semibold text-gray-300 mb-3">Length / Mass Metric Convert</h3>
+                            <div class="space-y-3">
+                                <select id="unitType" onchange="populateUnitOptions()" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-2 text-sm text-white focus:outline-none"></select>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input type="number" id="unitInput" value="1" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-2 text-sm text-white focus:outline-none">
+                                    <input type="text" id="unitOutput" readonly class="w-full bg-gray-800 border border-gray-600 rounded-lg p-2 text-sm text-emerald-400 font-bold focus:outline-none">
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <select id="unitFrom" class="bg-gray-700 border border-gray-600 rounded-lg p-2 text-sm text-white focus:outline-none"></select>
+                                    <select id="unitTo" class="bg-gray-700 border border-gray-600 rounded-lg p-2 text-sm text-white focus:outline-none"></select>
+                                </div>
+                                <button onclick="performUnitConversion()" class="w-full bg-blue-600 hover:bg-blue-700 py-2.5 rounded-lg text-sm font-bold transition-all">Calculate Transformation</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-    for (let plat of gameState.platforms) {
-      if (e.x + e.w > plat.x && e.x < plat.x + plat.w && e.y + e.h > plat.y && e.y + e.h - e.vy <= plat.y) {
-        e.y = plat.y - e.h; e.vy = 0;
-      }
-    }
-    if (e.x < 0) e.x = 0; if (e.x + e.w > MAP_W) e.x = MAP_W - e.w;
+            <section id="mod-resizer" class="tab-content hidden p-4 max-w-2xl mx-auto space-y-4">
+                <div class="bg-gray-800 p-5 rounded-2xl border border-gray-700 shadow-xl">
+                    <h2 class="text-xl font-bold border-b border-gray-700 pb-2 text-emerald-400"><i class="fa-solid fa-scissors mr-2"></i>Media Compressor</h2>
+                    
+                    <div class="mt-4 border-2 border-dashed border-gray-600 rounded-xl p-6 text-center cursor-pointer hover:border-emerald-500 transition-colors relative" id="dropzone">
+                        <input type="file" id="mediaUpload" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer">
+                        <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-400 mb-1"></i>
+                        <p class="text-xs font-semibold">Tap to upload local image file</p>
+                    </div>
 
-    e.shootCooldown--;
-    let currentGun = weapons[e.gunIdx];
-    if (e.shootCooldown <= 0 && Math.abs(e.x - p.x) < currentGun.range) {
-      const angle = Math.atan2(p.y + 20 - (e.y + 24), p.x + 16 - (e.x + 16)) + (Math.random() - 0.5) * 0.2; 
-      playShotSound(e.gunIdx);
-      gameState.bullets.push({ 
-        x: e.x + 16 + Math.cos(angle)*15, y: e.y + 24 + Math.sin(angle)*15, 
-        vx: Math.cos(angle) * currentGun.speed, vy: Math.sin(angle) * currentGun.speed, 
-        r: 3, life: Math.round(currentGun.range / currentGun.speed), enemy: true 
-      });
-      e.shootCooldown = currentGun.fireRate / 2 + 40 + Math.random()*40;
-    }
-  });
+                    <div id="compressorControls" class="hidden mt-4 bg-gray-900 p-4 rounded-xl border border-gray-700 space-y-3">
+                        <div class="space-y-2">
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-400 mb-1">Target Width (Pixels)</label>
+                                <input type="number" id="targetWidth" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-2 text-sm text-white">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-400 mb-1">Quality (<span id="qualVal">80</span>%)</label>
+                                <input type="range" id="targetQuality" min="10" max="100" value="80" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-emerald-500" oninput="document.getElementById('qualVal').innerText=this.value">
+                            </div>
+                        </div>
+                        <button onclick="processClientImage()" class="w-full bg-emerald-600 hover:bg-emerald-700 py-2.5 rounded-lg text-sm font-bold transition-all">Compress Asset</button>
+                        
+                        <div id="mediaOutputArea" class="hidden border-t border-gray-700 pt-3 flex flex-col items-center space-y-2">
+                            <img id="previewOut" class="max-h-48 rounded-lg border border-gray-700">
+                            <a id="downloadLink" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all shadow-md">Download Output</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-  gameState.bullets.forEach(b => {
-    if (b.enemy && b.x > p.x && b.x < p.x + p.w && b.y > p.y && b.y < p.y + p.h) {
-      p.health -= 5; b.life = 0;
-      if (p.health <= 0) endGame();
-    }
-  });
-}
+            <section id="mod-arcade" class="tab-content hidden p-4 max-w-2xl mx-auto space-y-4">
+                <div class="bg-gray-800 p-5 rounded-2xl border border-gray-700 shadow-xl">
+                    <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                        <h2 class="text-xl font-bold text-emerald-400"><i class="fa-solid fa-gamepad mr-2"></i>Arcade Arena</h2>
+                        <div class="flex gap-1.5">
+                            <button onclick="launchGame('flappy')" class="bg-blue-600 hover:bg-blue-700 text-[11px] font-bold px-2.5 py-1.5 rounded-md transition-all">Flappy</button>
+                            <button onclick="launchGame('2048')" class="bg-purple-600 hover:bg-purple-700 text-[11px] font-bold px-2.5 py-1.5 rounded-md transition-all">2048</button>
+                        </div>
+                    </div>
 
-function updateParticles() { gameState.particles = gameState.particles.filter(pt => { pt.x += pt.vx; pt.y += pt.vy; pt.life--; return pt.life > 0; }); }
+                    <div class="flex justify-center mt-4">
+                        <div id="gameViewport" class="bg-gray-950 p-2 rounded-xl border border-gray-900 relative max-w-full overflow-hidden">
+                            <canvas id="arcadeCanvas" width="320" height="400" class="bg-indigo-950 rounded-lg mx-auto block"></canvas>
+                            <div id="matrixGrid2048" class="hidden w-72 h-72 bg-gray-700 rounded-lg p-1.5 grid grid-cols-4 gap-1.5 relative mx-auto"></div>
+                        </div>
+                    </div>
+                    <p class="text-center text-[11px] text-gray-400 mt-2">Tap screen to bounce Flappy. Swipe or use desktop arrow keys for 2048.</p>
+                </div>
+            </section>
 
-function drawRadar() {
-  radarCtx.fillStyle = 'rgba(10, 24, 10, 0.9)';
-  radarCtx.fillRect(0, 0, 180, 60);
+            <section id="mod-biolink" class="tab-content hidden p-4 max-w-md mx-auto">
+                <div class="bg-gradient-to-b from-gray-800 to-gray-900 p-6 rounded-3xl border border-gray-700 shadow-2xl text-center relative overflow-hidden">
+                    <div class="w-20 h-20 bg-gradient-to-tr from-emerald-500 to-blue-600 rounded-full mx-auto p-1 shadow-xl mb-3">
+                        <div class="w-full h-full bg-gray-800 rounded-full flex items-center justify-center overflow-hidden">
+                            <i class="fa-solid fa-user-tie text-3xl text-gray-400"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-lg font-bold">Chinedu Okafor</h3>
+                    <p class="text-xs text-emerald-400 font-medium">Full-Stack Dev & Content Strategist</p>
+                    
+                    <div class="mt-5 space-y-2.5">
+                        <a href="https://github.com" target="_blank" class="flex items-center justify-between bg-gray-800 hover:bg-gray-700 border border-gray-700 p-3 rounded-xl transition-all">
+                            <i class="fa-brands fa-github text-lg text-gray-300"></i>
+                            <span class="text-xs font-semibold">Open Source Projects</span>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-gray-500"></i>
+                        </a>
+                        <a href="https://linkedin.com" target="_blank" class="flex items-center justify-between bg-gray-800 hover:bg-gray-700 border border-gray-700 p-3 rounded-xl transition-all">
+                            <i class="fa-brands fa-linkedin text-lg text-blue-400"></i>
+                            <span class="text-xs font-semibold">Connect on LinkedIn</span>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-gray-500"></i>
+                        </a>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-gray-800 text-center">
+                        <a href="legal.html" target="_blank" class="text-xs text-emerald-500 hover:underline">Privacy Policy & Compliance Disclosures</a>
+                    </div>
+                </div>
+            </section>
 
-  const scaleX = 180 / MAP_W;
-  const scaleY = 60 / MAP_H;
+        </div>
+    </main>
 
-  radarCtx.fillStyle = '#4a5e3a';
-  gameState.platforms.forEach(p => {
-    radarCtx.fillRect(p.x * scaleX, p.y * scaleY, p.w * scaleX, p.h * scaleY);
-  });
+    <nav class="fixed bottom-0 inset-x-0 bg-gray-950 border-t border-gray-800 h-16 flex items-center justify-around px-2 z-50 shadow-2xl">
+        <button onclick="switchTab('reels')" class="tab-btn flex flex-col items-center justify-center flex-1 h-full text-emerald-400 transition-colors">
+            <i class="fa-solid fa-video text-lg"></i>
+            <span class="text-[10px] font-bold mt-1">Reels</span>
+        </button>
+        <button onclick="switchTab('converter')" class="tab-btn flex flex-col items-center justify-center flex-1 h-full text-gray-500 hover:text-gray-200 transition-colors">
+            <i class="fa-solid fa-scale-balanced text-lg"></i>
+            <span class="text-[10px] font-bold mt-1">Convert</span>
+        </button>
+        <button onclick="switchTab('resizer')" class="tab-btn flex flex-col items-center justify-center flex-1 h-full text-gray-500 hover:text-gray-200 transition-colors">
+            <i class="fa-solid fa-photo-film text-lg"></i>
+            <span class="text-[10px] font-bold mt-1">Media</span>
+        </button>
+        <button onclick="switchTab('arcade')" class="tab-btn flex flex-col items-center justify-center flex-1 h-full text-gray-500 hover:text-gray-200 transition-colors">
+            <i class="fa-solid fa-gamepad text-lg"></i>
+            <span class="text-[10px] font-bold mt-1">Arcade</span>
+        </button>
+        <button onclick="switchTab('biolink')" class="tab-btn flex flex-col items-center justify-center flex-1 h-full text-gray-500 hover:text-gray-200 transition-colors">
+            <i class="fa-solid fa-id-card text-lg"></i>
+            <span class="text-[10px] font-bold mt-1">Bio</span>
+        </button>
+    </nav>
 
-  // Player radar blip
-  radarCtx.fillStyle = '#00ffcc';
-  radarCtx.beginPath();
-  radarCtx.arc(gameState.player.x * scaleX, gameState.player.y * scaleY, 3, 0, Math.PI * 2);
-  radarCtx.fill();
+    <script type="text/javascript">
+        
+        // INTERFACE NAVIGATION DRIVER
+        function switchTab(targetId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('text-emerald-400');
+                btn.classList.add('text-gray-500', 'hover:text-gray-200');
+            });
 
-  // Real human enemies radar blips
-  radarCtx.fillStyle = '#ff2233';
-  gameState.enemies.forEach(e => {
-    radarCtx.beginPath();
-    radarCtx.arc(e.x * scaleX, e.y * scaleY, 2.5, 0, Math.PI * 2);
-    radarCtx.fill();
-  });
-}
+            const activeContent = document.getElementById(`mod-${targetId}`);
+            if(activeContent) activeContent.classList.remove('hidden');
 
-function draw() {
-  ctx.clearRect(0,0,viewW,viewH);
-  const theme = mapThemes[activeMapIdx];
+            const event = window.event;
+            let targetedButton = event ? event.currentTarget : null;
+            if(!targetedButton) {
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    if(btn.getAttribute('onclick').includes(targetId)) targetedButton = btn;
+                });
+            }
+            if(targetedButton) {
+                targetedButton.classList.remove('text-gray-500', 'hover:text-gray-200');
+                targetedButton.classList.add('text-emerald-400');
+            }
 
-  const gradient = ctx.createLinearGradient(0, 0, 0, viewH);
-  gradient.addColorStop(0, theme.skyTop); gradient.addColorStop(1, theme.skyBottom);
-  ctx.fillStyle = gradient; ctx.fillRect(0, 0, viewW, viewH);
+            // Trigger Adcash Interstitial Ad refresh on every single tab switch to maximize impressions
+            if(typeof aclib !== 'undefined') {
+                aclib.runInterstitial({ zoneId: '11402770' });
+            }
 
-  ctx.save();
-  ctx.translate(-camera.x, -camera.y);
+            if(targetId !== 'arcade') killArcadeEngine();
+            if(targetId === 'reels' && document.getElementById('reelsContainer').children.length === 0) setupReelsEngine();
+        }
 
-  theme.mountains.forEach((mnt, mIdx) => {
-    ctx.fillStyle = mnt.color; ctx.beginPath(); ctx.moveTo(0, MAP_H);
-    let stepsArr = mIdx === 0 ? mountainSteps1 : mountainSteps2;
-    for (let i = 0; i < stepsArr.length; i++) {
-      let x = stepsArr[i]; let y = mnt.base - (i % 2 === 0 ? mnt.peak : mnt.peak * 0.4) - (Math.sin(i)*15);
-      ctx.lineTo(x, y);
-    }
-    ctx.lineTo(MAP_W, MAP_H); ctx.fill();
-  });
+        // MODULE 1 ENGINE: ONE CARD SCROLL NAIJA REELS (JOKES PIPELINE)
+        const naijaJokesPool = [
+            { txt: "Omo, Nigerian economy will make you look at price tag, look at your account balance, and apologize to the store vendor.", emoji: "😭💸" },
+            { txt: "NEPA brought light while I was taking a hot bath, I had to freeze inside the water so they wouldn't hear me moving and take it back.", emoji: "💡🧼" },
+            { txt: "The rate at which people say 'God when' in Nigeria, even angels are looking down with calculators trying to compute the queue.",
+              emoji: "👼📝" },
+            { txt: "You haven't truly known fear until you hear your mother call your full legal name from the parlor with a low, calm voice.", emoji: "💀🤰" },
+            { txt: "Tailor said your cloth will be ready on Friday, but he didn't specify which year's Friday. Calm down, bro.", emoji: "🪡🧵" },
+            { txt: "Conductor will be screaming 'Yaba straight!' but deep down he knows the bus is stopping at every single telegraph pole.", emoji: "🚌🗣️" },
+            { txt: "Lagos traffic will make you rethink your entire existence. You can enter the bus as a bachelor and arrive as a grandfather.", emoji: "🚗👴" },
+            { txt: "The only place where 'Yes' can mean 'No' is when a Nigerian says: 'Am I your mate?' Just say sorry immediately.", emoji: "🤐🙏" },
+            { txt: "If a mechanic tells you 'Boss, matching things don touch ground,' just prepare to sell your remaining property.", emoji: "🔧🚘" },
+            { txt: "Nigerian banks will send you a debit alert for maintenance fee, card fee, processing fee, and breathing fee.", emoji: "🏦🙄" }
+        ];
 
-  ctx.fillStyle = theme.canopy;
-  for (let i = 0; i < MAP_W; i += 120) {
-    ctx.beginPath(); ctx.arc(i, FLOOR_Y - 10, 60, 0, Math.PI, true); ctx.fill();
-  }
+        let reelIndex = 0;
+        function setupReelsEngine() {
+            const container = document.getElementById('reelsContainer');
+            for(let i=0; i<5; i++) { injectReelNode(container); }
+            container.addEventListener('scroll', () => {
+                if (container.scrollTop + container.clientHeight >= container.scrollHeight - 300) {
+                    injectReelNode(container);
+                }
+            });
+        }
 
-  gameState.platforms.forEach(p => {
-    ctx.fillStyle = theme.ground; ctx.fillRect(p.x, p.y, p.w, p.h);
-    ctx.fillStyle = theme.grass; ctx.fillRect(p.x, p.y, p.w, 6);
-  });
-  gameState.bunkers.forEach(b => { ctx.drawImage(bunkerImg, b.x, b.y, b.w, b.h); });
+        function injectReelNode(targetContainer) {
+            const data = naijaJokesPool[reelIndex % naijaJokesPool.length];
+            reelIndex++;
+            
+            // Generate realistic randomized engagement configurations for each unique card
+            const likesCount = (Math.random() * 8.5 + 1.2).toFixed(1) + "k";
+            const commentCount = Math.floor(Math.random() * 400 + 45);
+            const shareCount = Math.floor(Math.random() * 800 + 120);
 
-  if (gameState.player.jetpacking) {
-    ctx.fillStyle = '#ff4500'; ctx.beginPath();
-    ctx.moveTo(gameState.player.x + (gameState.player.facing > 0 ? 4 : 28), gameState.player.y + 36);
-    ctx.lineTo(gameState.player.x + (gameState.player.facing > 0 ? -4 : 36), gameState.player.y + 54);
-    ctx.lineTo(gameState.player.x + (gameState.player.facing > 0 ? 12 : 20), gameState.player.y + 40);
-    ctx.fill();
-  }
+            const node = document.createElement('div');
+            node.className = "w-full h-full flex-none bg-gradient-to-b from-gray-950 via-gray-900 to-black flex flex-col justify-between p-5 relative reel-card";
+            node.innerHTML = `
+                <div class="flex justify-between items-center w-full z-10 pt-2">
+                    <span class="text-[10px] uppercase bg-emerald-600/90 px-2 py-0.5 rounded text-white font-black tracking-wider animate-pulse">Naija Live Vibes</span>
+                    <i class="fa-solid fa-volume-high text-gray-500 text-sm"></i>
+                </div>
+                
+                <div class="my-auto px-2 text-center z-10 space-y-4">
+                    <p class="text-base md:text-lg font-medium leading-relaxed text-gray-100">${data.txt}</p>
+                    <div class="text-3xl filter drop-shadow-md animate-bounce pt-1">${data.emoji}</div>
+                </div>
+                
+                <div class="flex justify-between items-end w-full z-10 pb-2">
+                    <div class="flex items-center gap-2 max-w-[70%]">
+                        <div class="w-8 h-8 rounded-full bg-emerald-600 text-sm flex items-center justify-center font-bold text-white shrink-0">🇳🇬</div>
+                        <div class="truncate">
+                            <p class="text-xs font-bold text-white">@naija_reels</p>
+                            <p class="text-[10px] text-gray-400 truncate">Original Audio • System Hub</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col gap-3 text-center items-center justify-center pr-1 select-none">
+                        <button onclick="toggleLike(this)" class="group focus:outline-none">
+                            <i class="fa-solid fa-heart text-xl text-gray-400 group-hover:text-red-500 transition-colors"></i>
+                            <span class="block text-[9px] text-gray-400 font-bold mt-0.5">${likesCount}</span>
+                        </button>
+                        <button onclick="alert('Comments feature loading...')" class="focus:outline-none">
+                            <i class="fa-solid fa-comment text-xl text-gray-400 hover:text-blue-400"></i>
+                            <span class="block text-[9px] text-gray-400 font-bold mt-0.5">${commentCount}</span>
+                        </button>
+                        <button onclick="navigator.clipboard.writeText('${data.txt}'); alert('Copied to clipboard!');" class="focus:outline-none">
+                            <i class="fa-solid fa-share text-xl text-gray-400 hover:text-emerald-400"></i>
+                            <span class="block text-[9px] text-gray-400 font-bold mt-0.5">${shareCount}</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+            targetContainer.appendChild(node);
+        }
 
-  // Draw Player Avatar
-  ctx.save();
-  if (gameState.player.facing < 0) {
-    ctx.translate(gameState.player.x + gameState.player.w, gameState.player.y); ctx.scale(-1, 1);
-    ctx.drawImage(playerImg, 0, 0, gameState.player.w, gameState.player.h);
-  } else {
-    ctx.drawImage(playerImg, gameState.player.x, gameState.player.y, gameState.player.w, gameState.player.h);
-  }
-  ctx.restore();
+        function toggleLike(btn) {
+            const icon = btn.querySelector('i');
+            if(icon.classList.contains('text-gray-400')) {
+                icon.className = "fa-solid fa-heart text-xl text-red-500 animate-ping absolute";
+                setTimeout(() => { icon.className = "fa-solid fa-heart text-xl text-red-500"; }, 200);
+            } else {
+                icon.className = "fa-solid fa-heart text-xl text-gray-400";
+            }
+        }
 
-  // Draw Gun
-  ctx.save();
-  ctx.translate(gameState.player.x + 18, gameState.player.y + 32);
-  let gunAngle = (gameState.aimX === 0 && gameState.aimY === 0) ? (gameState.player.facing > 0 ? 0 : Math.PI) : Math.atan2(gameState.aimY, gameState.aimX);
-  if (gameState.player.facing < 0) { ctx.scale(1, -1); ctx.rotate(-gunAngle + Math.PI); } else { ctx.rotate(gunAngle); }
-  ctx.drawImage(rifleImg, -5, -4, activeGunIdx === 2 ? 34 : 28, 10);
-  ctx.restore();
+        // MODULE 2 ENGINE: MATRIX UNITS & CURRENCY CONVERTER
+        const currencyMap = { "USD": 1, "EUR": 0.92, "GBP": 0.79, "NGN": 1500, "CAD": 1.36, "GHS": 14.5 };
+        const conversionMetrics = {
+            Length: { meters: 1, kilometers: 0.001, miles: 0.000621371, feet: 3.28084 },
+            Mass: { kilograms: 1, grams: 1000, pounds: 2.20462, ounces: 35.274 }
+        };
 
-  // Laser Pointer Reticle
-  if (Math.abs(gameState.aimX) > 0.05 || Math.abs(gameState.aimY) > 0.05) {
-    ctx.strokeStyle = activeGunIdx === 2 ? 'rgba(255, 30, 30, 0.75)' : 'rgba(0, 255, 200, 0.4)'; 
-    ctx.lineWidth = activeGunIdx === 2 ? 1.5 : 1; ctx.setLineDash([5, 5]);
-    ctx.beginPath(); ctx.moveTo(gameState.player.x + 18, gameState.player.y + 32);
-    let angle = Math.atan2(gameState.aimY, gameState.aimX);
-    ctx.lineTo(gameState.player.x + 18 + Math.cos(angle) * weapons[activeGunIdx].range, gameState.player.y + 32 + Math.sin(angle) * weapons[activeGunIdx].range);
-    ctx.stroke(); ctx.setLineDash([]);
-  }
+        function initConverterData() {
+            const fromC = document.getElementById('currFrom');
+            const toC = document.getElementById('currTo');
+            const unitType = document.getElementById('unitType');
+            
+            Object.keys(currencyMap).forEach(k => {
+                fromC.innerHTML += `<option value="${k}">${k}</option>`;
+                toC.innerHTML += `<option value="${k}">${k}</option>`;
+            });
+            toC.value = "NGN";
 
-  // Draw Real Human Enemies with full details
-  gameState.enemies.forEach(e => {
-    ctx.save();
-    if (e.facing < 0) {
-      ctx.translate(e.x + e.w, e.y); ctx.scale(-1, 1);
-      ctx.drawImage(humanEnemyImg, 0, 0, e.w, e.h);
-    } else {
-      ctx.drawImage(humanEnemyImg, e.x, e.y, e.w, e.h);
-    }
-    ctx.restore();
+            Object.keys(conversionMetrics).forEach(type => {
+                unitType.innerHTML += `<option value="${type}">${type}</option>`;
+            });
+            populateUnitOptions();
+        }
 
-    // Player name labels
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 10px Arial';
-    ctx.textAlign = 'center';
-    ctx.textShadow = '1px 1px 2px #000';
-    ctx.fillText(e.name, e.x + e.w/2, e.y - 16);
+        function swapCurrency() {
+            const f = document.getElementById('currFrom').value;
+            document.getElementById('currFrom').value = document.getElementById('currTo').value;
+            document.getElementById('currTo').value = f;
+            performCurrencyConversion();
+        }
 
-    // Health UI
-    ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(e.x - 4, e.y - 8, e.w + 8, 3.5);
-    ctx.fillStyle = '#00ffcc'; ctx.fillRect(e.x - 4, e.y - 8, (e.w + 8) * (e.health/100), 3.5);
-  });
+        function performCurrencyConversion() {
+            const amt = parseFloat(document.getElementById('currAmount').value) || 0;
+            const from = document.getElementById('currFrom').value;
+            const to = document.getElementById('currTo').value;
+            const base = amt / currencyMap[from];
+            const output = base * currencyMap[to];
+            document.getElementById('currResult').value = output.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
 
-  gameState.bullets.forEach(b => { ctx.fillStyle = b.enemy ? '#ff3333' : weapons[activeGunIdx].color; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill(); });
-  gameState.particles.forEach(pt => { ctx.fillStyle = pt.color; ctx.globalAlpha = Math.max(0, pt.life / 15); ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.r, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; });
+        function populateUnitOptions() {
+            const type = document.getElementById('unitType').value;
+            const uFrom = document.getElementById('unitFrom');
+            const uTo = document.getElementById('unitTo');
+            uFrom.innerHTML = ''; uTo.innerHTML = '';
+            Object.keys(conversionMetrics[type]).forEach(unit => {
+                uFrom.innerHTML += `<option value="${unit}">${unit}</option>`;
+                uTo.innerHTML += `<option value="${unit}">${unit}</option>`;
+            });
+        }
 
-  ctx.restore();
+        function performUnitConversion() {
+            const type = document.getElementById('unitType').value;
+            const val = parseFloat(document.getElementById('unitInput').value) || 0;
+            const from = document.getElementById('unitFrom').value;
+            const to = document.getElementById('unitTo').value;
+            const base = val / conversionMetrics[type][from];
+            const result = base * conversionMetrics[type][to];
+            document.getElementById('unitOutput').value = result.toFixed(4);
+        }
 
-  document.getElementById('healthBarFill').style.width = Math.max(0, gameState.player.health) + '%';
-  document.getElementById('fuelFill').style.width = (gameState.player.fuel / JETPACK_FUEL_MAX * 100) + '%';
-  document.getElementById('score').textContent = gameState.score;
+        // MODULE 3 ENGINE: CLIENT-SIDE IMAGE OPTIMIZATION PIPELINE
+        document.getElementById('mediaUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    document.getElementById('targetWidth').value = img.width;
+                    document.getElementById('compressorControls').classList.remove('hidden');
+                    window.loadedImgObject = img;
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
 
-  drawRadar();
-}
+        function processClientImage() {
+            const img = window.loadedImgObject;
+            if(!img) return;
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const targetW = parseInt(document.getElementById('targetWidth').value) || img.width;
+            const scale = targetW / img.width;
+            canvas.width = targetW;
+            canvas.height = img.height * scale;
+            
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            const qual = parseInt(document.getElementById('targetQuality').value) / 100;
+            const outData = canvas.toDataURL('image/jpeg', qual);
+            
+            document.getElementById('previewOut').src = outData;
+            const dLink = document.getElementById('downloadLink');
+            dLink.href = outData;
+            dLink.download = "optimized_platform_asset.jpg";
+            document.getElementById('mediaOutputArea').classList.remove('hidden');
+        }
 
-let enemySpawnTimer = 0;
-function gameLoop() {
-  if (!gameState.gameOver) {
-    updatePlayer(); updateBullets(); updateEnemies(); updateParticles();
-    enemySpawnTimer--;
-    if (enemySpawnTimer <= 0) { spawnEnemy(); enemySpawnTimer = 140 - Math.min(gameState.score * 3, 60); }
-  }
-  draw();
-  requestAnimationFrame(gameLoop);
-}
+        // MODULE 4 ENGINE: GAMING SANDBOX (FLAPPY BIRD / 2048 ENGINE)
+        let gameLoopId = null;
+        const canvas = document.getElementById('arcadeCanvas');
+        const ctx = canvas.getContext('2d');
 
-function endGame() {
-  gameState.gameOver = true;
-  document.getElementById('finalScore').textContent = gameState.score;
-  document.getElementById('gameOver').style.display = 'block';
-  if(shootInterval) { clearInterval(shootInterval); shootInterval = null; }
-}
+        function launchGame(gameKey) {
+            killArcadeEngine();
+            if(typeof aclib !== 'undefined') { aclib.runInterstitial({ zoneId: '11402770' }); }
+            
+            if(gameKey === 'flappy') {
+                document.getElementById('matrixGrid2048').classList.add('hidden');
+                canvas.classList.remove('hidden');
+                initFlappyEngine();
+            } else if(gameKey === '2048') {
+                canvas.classList.add('hidden');
+                document.getElementById('matrixGrid2048').classList.remove('hidden');
+                init2048Engine();
+            }
+        }
 
-function restartGame() {
-  gameState.player = { x: 400, y: FLOOR_Y - 60, w: 34, h: 52, vx: 0, vy: 0, speed: 5.0, jumpPower: 9.5, onGround: false, health: 100, facing: 1, fuel: JETPACK_FUEL_MAX, jetpacking: false };
-  gameState.bullets = []; gameState.enemies = []; gameState.particles = []; gameState.score = 0; gameState.moveX = 0; gameState.moveY = 0; gameState.aimX = 0; gameState.aimY = 0; gameState.gameOver = false;
-  document.getElementById('gameOver').style.display = 'none';
-  enemySpawnTimer = 20;
-}
+        function killArcadeEngine() {
+            if(gameLoopId) cancelAnimationFrame(gameLoopId);
+            window.removeEventListener('keydown', flappyKeyHandler);
+            window.removeEventListener('keydown', keyHandler2048);
+            canvas.removeEventListener('touchstart', flappyTouchHandler);
+        }
 
-enemySpawnTimer = 20;
-gameLoop();
-</script>
+        // FLAPPY BIRD SUB-ENGINE
+        let bird, pipes, score, flappyOver;
+        function initFlappyEngine() {
+            bird = { x: 40, y: 150, velocity: 0, gravity: 0.35, jump: -5.5, radius: 10 };
+            pipes = []; score = 0; flappyOver = false;
+            window.addEventListener('keydown', flappyKeyHandler);
+            canvas.addEventListener('touchstart', flappyTouchHandler);
+            runFlappyLoop();
+        }
+
+        function flappyKeyHandler(e) { if(e.code === 'Space') { bird.velocity = bird.jump; e.preventDefault(); if(flappyOver) initFlappyEngine(); } }
+        function flappyTouchHandler(e) { bird.velocity = bird.jump; e.preventDefault(); if(flappyOver) initFlappyEngine(); }
+
+        function runFlappyLoop() {
+            if(flappyOver) {
+                ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+                ctx.fillStyle = '#fff'; ctx.font = '20px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2 - 10);
+                ctx.font = '12px sans-serif'; ctx.fillText('Tap screen to restart', canvas.width/2, canvas.height/2 + 15);
+                return;
+            }
+            ctx.fillStyle = '#1e1b4b'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            
+            bird.velocity += bird.gravity; bird.y += bird.velocity;
+            ctx.beginPath(); ctx.fillStyle = '#f59e0b'; ctx.arc(bird.x, bird.y, bird.radius, 0, Math.PI*2); ctx.fill();
+
+            if(pipes.length === 0 || pipes[pipes.length-1].x < canvas.width - 140) {
+                let gap = 100; let topH = Math.random() * (canvas.height - gap - 80) + 30;
+                pipes.push({ x: canvas.width, top: topH, bottom: canvas.height - topH - gap, passed: false });
+            }
+
+            pipes.forEach((p) => {
+                p.x -= 2.2; ctx.fillStyle = '#10b981';
+                ctx.fillRect(p.x, 0, 35, p.top);
+                ctx.fillRect(p.x, canvas.height - p.bottom, 35, p.bottom);
+
+                if(!p.passed && p.x < bird.x) { score++; p.passed = true; }
+                if(bird.x + bird.radius > p.x && bird.x - bird.radius < p.x + 35) {
+                    if(bird.y - bird.radius < p.top || bird.y + bird.radius > canvas.height - p.bottom) flappyOver = true;
+                }
+            });
+
+            pipes = pipes.filter(p => p.x > -40);
+            if(bird.y > canvas.height || bird.y < 0) flappyOver = true;
+
+            ctx.fillStyle = '#fff'; ctx.font = '16px sans-serif'; ctx.textAlign = 'left';
+            ctx.fillText(`Score: ${score}`, 12, 28);
+            gameLoopId = requestAnimationFrame(runFlappyLoop);
+        }
+
+        // 2048 PUZZLE SUB-ENGINE
+        let matrix2048;
+        function init2048Engine() {
+            matrix2048 = Array(16).fill(0);
+            injectRandomTile2048(); injectRandomTile2048();
+            renderBoard2048();
+            window.addEventListener('keydown', keyHandler2048);
+        }
+
+        function injectRandomTile2048() {
+            let empties = [];
+            matrix2048.forEach((v, i) => { if(v === 0) empties.push(i); });
+            if(empties.length > 0) matrix2048[empties[Math.floor(Math.random() * empties.length)]] = Math.random() < 0.9 ? 2 : 4;
+        }
+
+        function renderBoard2048() {
+            const grid = document.getElementById('matrixGrid2048'); grid.innerHTML = '';
+            matrix2048.forEach(val => {
+                const cell = document.createElement('div');
+                cell.className = `flex items-center justify-center font-bold rounded text-base transition-all aspect-square ${val === 0 ? 'bg-gray-800 text-transparent' : 'bg-emerald-500 text-white shadow-md'}`;
+                cell.innerText = val !== 0 ? val : '';
+                grid.appendChild(cell);
+            });
+        }
+
+        function keyHandler2048(e) {
+            let moved = false;
+            if(e.key === 'ArrowLeft') { moved = slideLeft2048(); e.preventDefault(); }
+            if(e.key === 'ArrowRight') { moved = slideRight2048(); e.preventDefault(); }
+            if(e.key === 'ArrowUp') { moved = slideUp2048(); e.preventDefault(); }
+            if(e.key === 'ArrowDown') { moved = slideDown2048(); e.preventDefault(); }
+            if(moved) { injectRandomTile2048(); renderBoard2048(); }
+        }
+
+        function compressRow2048(row) {
+            let clean = row.filter(v => v !== 0);
+            for(let i=0; i<clean.length-1; i++) { if(clean[i] === clean[i+1]) { clean[i] *= 2; clean[i+1] = 0; } }
+            clean = clean.filter(v => v !== 0);
+            while(clean.length < 4) clean.push(0);
+            return clean;
+        }
+
+        function slideLeft2048() {
+            let old = [...matrix2048];
+            for(let i=0; i<4; i++) {
+                let start = i * 4; let row = matrix2048.slice(start, start + 4);
+                matrix2048.splice(start, 4, ...compressRow2048(row));
+            }
+            return JSON.stringify(old) !== JSON.stringify(matrix2048);
+        }
+
+        function slideRight2048() {
+            let old = [...matrix2048];
+            for(let i=0; i<4; i++) {
+                let start = i * 4; let row = matrix2048.slice(start, start + 4).reverse();
+                matrix2048.splice(start, 4, ...compressRow2048(row).reverse());
+            }
+            return JSON.stringify(old) !== JSON.stringify(matrix2048);
+        }
+
+        function slideUp2048() {
+            let old = [...matrix2048];
+            for(let i=0; i<4; i++) {
+                let row = [matrix2048[i], matrix2048[i+4], matrix2048[i+8], matrix2048[i+12]];
+                let compressed = compressRow2048(row);
+                for(let j=0; j<4; j++) matrix2048[i + j*4] = compressed[j];
+            }
+            return JSON.stringify(old) !== JSON.stringify(matrix2048);
+        }
+
+        function slideDown2048() {
+            let old = [...matrix2048];
+            for(let i=0; i<4; i++) {
+                let row = [matrix2048[i], matrix2048[i+4], matrix2048[i+8], matrix2048[i+12]].reverse();
+                let compressed = compressRow2048(row).reverse();
+                for(let j=0; j<4; j++) matrix2048[i + j*4] = compressed[j];
+            }
+            return JSON.stringify(old) !== JSON.stringify(matrix2048);
+        }
+
+        // AUTO INITIALIZE PIPELINES
+        window.addEventListener('DOMContentLoaded', () => {
+            setupReelsEngine();
+            initConverterData();
+            launchGame('flappy');
+        });
+    </script>
 </body>
 </html>
