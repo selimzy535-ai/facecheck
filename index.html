@@ -1,648 +1,74 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Reels Clone - Native Uploads</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-
-        body {
-            background-color: #000;
-            color: #fff;
-            overflow: hidden;
-        }
-
-        /* Container for Scroll Snapping */
-        .feed-container {
-            height: 100dvh;
-            width: 100vw;
-            overflow-y: scroll;
-            scroll-snap-type: y mandatory;
-            scroll-behavior: smooth;
-        }
-
-        .feed-container::-webkit-scrollbar {
-            display: none;
-        }
-
-        .reel {
-            height: 100dvh;
-            width: 100vw;
-            scroll-snap-align: start;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: #111;
-        }
-
-        video {
-            height: 100%;
-            width: 100%;
-            object-fit: cover;
-        }
-
-        /* Overlays */
-        .overlay-bottom {
-            position: absolute;
-            bottom: 20px;
-            left: 15px;
-            right: 70px;
-            z-index: 10;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: #ccc;
-            margin-right: 10px;
-        }
-
-        .username {
-            font-weight: bold;
-            font-size: 16px;
-            margin-right: 10px;
-        }
-
-        .follow-btn {
-            background: transparent;
-            border: 1px solid #fff;
-            color: #fff;
-            padding: 4px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.2s;
-        }
-
-        .follow-btn.following {
-            background: #fff;
-            color: #000;
-        }
-
-        .caption {
-            font-size: 14px;
-            line-height: 1.4;
-        }
-
-        .overlay-right {
-            position: absolute;
-            bottom: 40px;
-            right: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-            z-index: 10;
-        }
-
-        .action-btn {
-            background: transparent;
-            border: none;
-            color: #fff;
-            font-size: 24px;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-        }
-
-        .action-btn span {
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .liked { color: #ff3040; }
-
-        /* Heart Animation */
-        .heart-anim {
-            position: absolute;
-            font-size: 100px;
-            color: #ff3040;
-            opacity: 0;
-            transform: scale(0);
-            transition: all 0.5s ease-out;
-            pointer-events: none;
-            z-index: 20;
-        }
-
-        .heart-anim.active {
-            opacity: 1;
-            transform: scale(1.2) translateY(-20px);
-        }
-
-        /* Navigation Bar */
-        .top-nav {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            padding: 15px;
-            display: flex;
-            justify-content: space-between;
-            z-index: 50;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
-        }
-
-        .upload-trigger {
-            background: rgba(255,255,255,0.2);
-            border: none;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            cursor: pointer;
-            backdrop-filter: blur(5px);
-            font-weight: bold;
-        }
-
-        /* Modals */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 100;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-        }
-
-        .modal.active { display: flex; }
-
-        .modal-content {
-            background: #222;
-            padding: 20px;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 400px;
-        }
-
-        .modal-content input, .modal-content textarea {
-            width: 100%;
-            margin-bottom: 15px;
-            padding: 10px;
-            border-radius: 8px;
-            border: none;
-            background: #333;
-            color: #fff;
-        }
-        
-        .modal-content input[type="file"] {
-            background: transparent;
-            padding: 0;
-        }
-
-        .modal-content button {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            background: #0095f6;
-            color: #fff;
-            font-weight: bold;
-            cursor: pointer;
-            margin-bottom: 10px;
-        }
-        
-        .close-modal {
-            background: transparent !important;
-            border: 1px solid #555 !important;
-        }
-
-        .comments-section {
-            display: none;
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            height: 60vh;
-            background: #222;
-            border-top-left-radius: 20px;
-            border-top-right-radius: 20px;
-            z-index: 30;
-            padding: 20px;
-            flex-direction: column;
-        }
-        .comments-section.active { display: flex; }
-        
-        .comment-list {
-            flex-grow: 1;
-            overflow-y: auto;
-            margin-bottom: 15px;
-        }
-        
-        .comment-item {
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-
-        .comment-input-area {
-            display: flex;
-            gap: 10px;
-        }
-        .comment-input-area input {
-            flex-grow: 1;
-            padding: 10px;
-            border-radius: 20px;
-            border: none;
-            background: #333;
-            color: white;
-        }
-        .comment-input-area button {
-            background: transparent;
-            color: #0095f6;
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        
-        /* Empty State */
-        .empty-state {
-            height: 100dvh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            color: #888;
-        }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Video Shrinker</title>
 </head>
-<body>
-
-    <div class="top-nav">
-        <h2>Reels</h2>
-        <button class="upload-trigger" onclick="toggleUploadModal()">+ Upload</button>
-    </div>
-
-    <div class="feed-container" id="feed">
-        <div class="empty-state">
-            <h3>No Reels Yet</h3>
-            <p>Upload a video to get started.</p>
-        </div>
-    </div>
-
-    <div class="modal" id="uploadModal">
-        <div class="modal-content">
-            <h3>Upload Reel</h3>
-            <p style="font-size: 12px; color: #aaa; margin-bottom: 15px;">Select a video file from your device.</p>
-            <input type="file" id="videoFile" accept="video/*">
-            <input type="text" id="username" placeholder="Your Username">
-            <textarea id="caption" placeholder="Write a caption..." rows="3"></textarea>
-            <button id="uploadBtn" onclick="uploadReel()">Post Reel</button>
-            <button class="close-modal" onclick="toggleUploadModal()">Cancel</button>
-        </div>
-    </div>
-
-    <div class="comments-section" id="commentsModal">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-            <h3>Comments</h3>
-            <span style="cursor: pointer;" onclick="closeComments()">✕</span>
-        </div>
-        <div class="comment-list" id="commentList"></div>
-        <div class="comment-input-area">
-            <input type="text" id="newComment" placeholder="Add a comment...">
-            <button onclick="postComment()">Post</button>
-        </div>
-    </div>
-
-    <script>
-        // --- 1. IndexedDB Setup (For large files/Blobs) ---
-        const DB_NAME = 'ReelsCloneDB';
-        const STORE_NAME = 'reels';
-        const FOLLOW_KEY = 'ig_following'; // Lightweight state stays in localStorage
+<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="max-w-md w-full bg-gray-800 p-8 rounded-2xl shadow-2xl border border-gray-700">
+        <h1 class="text-2xl font-bold mb-6 text-center">Video Compressor</h1>
         
-        let db;
-        let activeCommentReelId = null;
-
-        // Broadcast Channel for Cross-Tab Syncing
-        const syncChannel = new BroadcastChannel('reels_sync_channel');
+        <input type="file" id="uploader" accept="video/*" class="block w-full text-sm text-gray-400 mb-6 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-blue-600 file:text-white hover:file:bg-blue-500" />
         
-        syncChannel.onmessage = (event) => {
-            if (event.data === 'update_feed') {
-                renderFeed();
-            }
-        };
+        <button id="compress-btn" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition-all transform active:scale-95">
+            Compress Video
+        </button>
 
-        function initDB() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(DB_NAME, 1);
-                
-                request.onupgradeneeded = (event) => {
-                    db = event.target.result;
-                    if (!db.objectStoreNames.contains(STORE_NAME)) {
-                        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-                    }
-                };
-                
-                request.onsuccess = (event) => {
-                    db = event.target.result;
-                    resolve(db);
-                };
-                
-                request.onerror = (event) => reject(event.target.error);
+        <div id="status" class="mt-4 text-center text-sm text-gray-400">Ready</div>
+        
+        <div class="mt-6">
+            <video id="output-video" controls class="w-full rounded-lg hidden"></video>
+        </div>
+    </div>
+
+    <script type="module">
+        import { FFmpeg } from 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js';
+        import { toBlobURL, fetchFile } from 'https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js';
+
+        const ffmpeg = new FFmpeg();
+        const status = document.getElementById('status');
+        const btn = document.getElementById('compress-btn');
+        const video = document.getElementById('output-video');
+        const uploader = document.getElementById('uploader');
+
+        async function init() {
+            const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+            await ffmpeg.load({
+                coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+                wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
             });
         }
 
-        // DB Helper Functions
-        function getAllReels() {
-            return new Promise((resolve) => {
-                const transaction = db.transaction([STORE_NAME], 'readonly');
-                const store = transaction.objectStore(STORE_NAME);
-                const request = store.getAll();
-                request.onsuccess = () => resolve(request.result);
-            });
-        }
-
-        function saveReelToDB(reelData) {
-            return new Promise((resolve) => {
-                const transaction = db.transaction([STORE_NAME], 'readwrite');
-                const store = transaction.objectStore(STORE_NAME);
-                store.put(reelData);
-                transaction.oncomplete = () => resolve();
-            });
-        }
-
-        function getReelById(id) {
-            return new Promise((resolve) => {
-                const transaction = db.transaction([STORE_NAME], 'readonly');
-                const store = transaction.objectStore(STORE_NAME);
-                const request = store.get(id);
-                request.onsuccess = () => resolve(request.result);
-            });
-        }
-
-        function getFollowing() {
-            const data = localStorage.getItem(FOLLOW_KEY);
-            return data ? JSON.parse(data) : {};
-        }
-
-        function saveFollowing(following) {
-            localStorage.setItem(FOLLOW_KEY, JSON.stringify(following));
-        }
-
-        // --- 2. UI Rendering ---
-        async function renderFeed() {
-            const feed = document.getElementById('feed');
-            const reels = await getAllReels();
-            const following = getFollowing();
+        btn.onclick = async () => {
+            if (!uploader.files[0]) return alert("Please select a video");
             
-            if (reels.length === 0) return; // Keep empty state
-            
-            feed.innerHTML = ''; // Clear current
-
-            // Sort by timestamp (newest first)
-            reels.sort((a, b) => b.timestamp - a.timestamp).forEach(reel => {
-                const isFollowing = following[reel.username];
-                
-                // Create object URL from the stored Blob/File
-                const videoUrl = URL.createObjectURL(reel.videoBlob);
-                
-                const reelEl = document.createElement('div');
-                reelEl.className = 'reel';
-                reelEl.dataset.id = reel.id;
-
-                reelEl.innerHTML = `
-                    <video src="${videoUrl}" loop playsinline></video>
-                    <div class="heart-anim">❤️</div>
-                    
-                    <div class="overlay-bottom">
-                        <div class="user-info">
-                            <div class="avatar"></div>
-                            <span class="username">@${reel.username}</span>
-                            <button class="follow-btn ${isFollowing ? 'following' : ''}" onclick="toggleFollow('${reel.username}', this)">
-                                ${isFollowing ? 'Following' : 'Follow'}
-                            </button>
-                        </div>
-                        <p class="caption">${reel.caption}</p>
-                    </div>
-
-                    <div class="overlay-right">
-                        <button class="action-btn" onclick="toggleLike('${reel.id}')">
-                            <span style="font-size: 28px;" class="${reel.isLiked ? 'liked' : ''}">${reel.isLiked ? '❤️' : '🤍'}</span>
-                            <span id="like-count-${reel.id}">${reel.likes}</span>
-                        </button>
-                        <button class="action-btn" onclick="openComments('${reel.id}')">
-                            <span style="font-size: 28px;">💬</span>
-                            <span id="comment-count-${reel.id}">${reel.comments.length}</span>
-                        </button>
-                        <button class="action-btn" onclick="shareReel()">
-                            <span style="font-size: 28px;">↗️</span>
-                            <span>Share</span>
-                        </button>
-                    </div>
-                `;
-                feed.appendChild(reelEl);
-            });
-
-            setupVideoInteraction();
-            setupIntersectionObserver();
-        }
-
-        // --- 3. Interaction Logic ---
-        function setupIntersectionObserver() {
-            const videos = document.querySelectorAll('video');
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    const video = entry.target;
-                    if (entry.isIntersecting) {
-                        video.play().catch(e => console.log("Auto-play prevented by browser"));
-                    } else {
-                        video.pause();
-                        video.currentTime = 0;
-                    }
-                });
-            }, { threshold: 0.6 });
-
-            videos.forEach(video => observer.observe(video));
-        }
-
-        function setupVideoInteraction() {
-            const reels = document.querySelectorAll('.reel');
-            
-            reels.forEach(reel => {
-                const video = reel.querySelector('video');
-                const heart = reel.querySelector('.heart-anim');
-                let lastTap = 0;
-
-                video.addEventListener('click', (e) => {
-                    const currentTime = new Date().getTime();
-                    const tapLength = currentTime - lastTap;
-                    
-                    if (tapLength < 300 && tapLength > 0) {
-                        forceLike(reel.dataset.id);
-                        heart.style.left = `${e.clientX - 50}px`;
-                        heart.style.top = `${e.clientY - 50}px`;
-                        heart.classList.add('active');
-                        setTimeout(() => heart.classList.remove('active'), 800);
-                    } else {
-                        video.paused ? video.play() : video.pause();
-                    }
-                    lastTap = currentTime;
-                });
-            });
-        }
-
-        async function toggleLike(id) {
-            const reel = await getReelById(id);
-            if(reel) {
-                reel.isLiked = !reel.isLiked;
-                reel.likes += reel.isLiked ? 1 : -1;
-                await saveReelToDB(reel);
-                renderFeed();
-                syncChannel.postMessage('update_feed'); // Tell other tabs
-            }
-        }
-
-        async function forceLike(id) {
-            const reel = await getReelById(id);
-            if(reel && !reel.isLiked) {
-                reel.isLiked = true;
-                reel.likes += 1;
-                await saveReelToDB(reel);
-                renderFeed();
-                syncChannel.postMessage('update_feed');
-            }
-        }
-
-        function toggleFollow(username, btnElement) {
-            let following = getFollowing();
-            if (following[username]) {
-                delete following[username];
-                btnElement.classList.remove('following');
-                btnElement.innerText = 'Follow';
-            } else {
-                following[username] = true;
-                btnElement.classList.add('following');
-                btnElement.innerText = 'Following';
-            }
-            saveFollowing(following);
-            renderFeed(); // Re-render to update all visible buttons for this user
-            syncChannel.postMessage('update_feed');
-        }
-
-        // --- 4. File Upload Logic ---
-        function toggleUploadModal() {
-            document.getElementById('uploadModal').classList.toggle('active');
-        }
-
-        async function uploadReel() {
-            const fileInput = document.getElementById('videoFile');
-            const user = document.getElementById('username').value || 'anonymous';
-            const cap = document.getElementById('caption').value;
-
-            if (fileInput.files.length === 0) {
-                alert("Please select a video file.");
-                return;
-            }
-
-            const file = fileInput.files[0];
-            const btn = document.getElementById('uploadBtn');
-            btn.innerText = "Processing...";
             btn.disabled = true;
+            status.innerText = "Initializing engine...";
+            await init();
 
-            const newReel = {
-                id: Date.now().toString(),
-                videoBlob: file, // Store the raw File/Blob in IndexedDB
-                username: user,
-                caption: cap,
-                likes: 0,
-                comments: [],
-                isLiked: false,
-                timestamp: Date.now()
-            };
-
-            await saveReelToDB(newReel);
+            const file = uploader.files[0];
+            const name = 'input.mp4';
             
-            // Reset UI
-            btn.innerText = "Post Reel";
+            await ffmpeg.writeFile(name, await fetchFile(file));
+            
+            status.innerText = "Compressing... (this takes a moment)";
+            
+            // Stronger & Faster command
+            await ffmpeg.exec([
+                '-i', name,
+                '-vcodec', 'libx264',
+                '-crf', '28',        // High compression
+                '-preset', 'ultrafast', // Speed optimization
+                '-tune', 'zerolatency', // Improves responsiveness
+                'output.mp4'
+            ]);
+            
+            const data = await ffmpeg.readFile('output.mp4');
+            video.src = URL.createObjectURL(new Blob([data.buffer], { type: 'video/mp4' }));
+            video.classList.remove('hidden');
+            status.innerText = "Compression Complete!";
             btn.disabled = false;
-            fileInput.value = '';
-            document.getElementById('caption').value = '';
-            
-            toggleUploadModal();
-            await renderFeed();
-            syncChannel.postMessage('update_feed');
-            
-            document.getElementById('feed').scrollTop = 0;
-        }
-
-        // --- 5. Comments Logic ---
-        async function openComments(id) {
-            activeCommentReelId = id;
-            const reel = await getReelById(id);
-            
-            const list = document.getElementById('commentList');
-            list.innerHTML = '';
-            
-            reel.comments.forEach(c => {
-                list.innerHTML += `<div class="comment-item"><strong>${c.user}:</strong> ${c.text}</div>`;
-            });
-
-            document.getElementById('commentsModal').classList.add('active');
-        }
-
-        function closeComments() {
-            document.getElementById('commentsModal').classList.remove('active');
-            activeCommentReelId = null;
-        }
-
-        async function postComment() {
-            if (!activeCommentReelId) return;
-            
-            const input = document.getElementById('newComment');
-            const text = input.value.trim();
-            if (!text) return;
-
-            const reel = await getReelById(activeCommentReelId);
-            
-            if (reel) {
-                reel.comments.push({ user: 'you', text: text });
-                await saveReelToDB(reel);
-                
-                openComments(activeCommentReelId); 
-                input.value = '';
-                renderFeed(); 
-                syncChannel.postMessage('update_feed');
-            }
-        }
-
-        // --- 6. Share API ---
-        async function shareReel() {
-            if (navigator.share) {
-                try {
-                    await navigator.share({
-                        title: `Reels Clone`,
-                        url: window.location.href 
-                    });
-                } catch (err) {}
-            } else {
-                alert("Link copied to clipboard!");
-                navigator.clipboard.writeText(window.location.href);
-            }
-        }
-
-        // --- Initialize App ---
-        initDB().then(() => {
-            renderFeed();
-        }).catch(err => {
-            console.error("IndexedDB failed to load:", err);
-            alert("Your browser does not support local database storage. App will not function.");
-        });
-
+        };
     </script>
 </body>
 </html>
