@@ -1,210 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GolViral - Client-Side Video Compressor</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/coi-serviceworker/0.1.7/coi-serviceworker.min.js"></script>
-<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.8/dist/ffmpeg.min.js"></script>
-<style>
-:root { --bg: #000; --card: #0a0a0a; --glass: rgba(10, 10, 10, 0.8); --accent: #00ff88; --text: #fff; --muted: #888; --border: #1a1a1a; --danger: #ff0055; --warn: #ffaa00; }
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-body { background: var(--bg); color: var(--text); max-width: 500px; margin: 0 auto; padding: 20px; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; }
-.card { background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 20px; padding: 24px; text-align: center; }
-h1 { font-size: 22px; margin-bottom: 6px; }
-p.desc { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
-.limits-box { display: flex; gap: 10px; margin-bottom: 20px; text-align: left; }
-.limit-item { flex: 1; background: var(--card); border: 1px solid var(--border); padding: 12px; border-radius: 12px; }
-.limit-item small { color: var(--muted); font-size: 11px; display: block; }
-.limit-item b { font-size: 14px; color: var(--accent); }
-.dropzone { border: 2px dashed var(--border); border-radius: 16px; padding: 30px 15px; cursor: pointer; transition: 0.2s; margin-bottom: 20px; background: var(--card); }
-.dropzone:hover { border-color: var(--accent); background: rgba(0, 255, 136, 0.03); }
-.dropzone p { font-size: 14px; margin-top: 8px; }
-.btn { background: var(--accent); color: #000; border: none; padding: 14px; border-radius: 12px; font-weight: 800; width: 100%; cursor: pointer; font-size: 15px; transition: 0.2s; margin-top: 8px; }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn.warn { background: var(--warn); }
-.progress-wrap { margin-top: 20px; display: none; text-align: left; }
-.progress-bar-bg { height: 8px; background: var(--card); border-radius: 10px; overflow: hidden; margin: 8px 0; border: 1px solid var(--border); }
-.progress-bar-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.2s; }
-.preview-wrap { margin-top: 20px; display: none; }
-video { width: 100%; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 12px; background: #000; max-height: 300px; }
-.stats { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 15px; background: var(--card); padding: 12px; border-radius: 10px; border: 1px solid var(--border); }
-.toast { position: fixed; top: 20px; left: 50%; transform: translate(-50%, -100px); background: var(--danger); color: #fff; padding: 12px 20px; border-radius: 20px; font-weight: 700; font-size: 13px; z-index: 999; transition: 0.3s; opacity: 0; text-align: center; max-width: 90%; }
-.toast.show { transform: translate(-50%, 0); opacity: 1; }
-</style>
+  <meta charset="UTF-8">
+  <title>Secure Signup Gate</title>
+  <!-- Load face-api.js directly from a CDN -->
+  <script defer src="https://jsdelivr.net"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .form-group { margin-bottom: 15px; }
+    #video { width: 320px; height: 240px; background: #333; display: block; margin-bottom: 10px; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    .success { color: green; font-weight: bold; }
+    .error { color: red; font-weight: bold; }
+  </style>
 </head>
 <body>
-<div id="toast" class="toast"></div>
-<div class="card">
-<h1>Video Compressor</h1>
-<p class="desc">Compress videos down to strictly &lt; 2 MB directly on your device.</p>
-<div class="limits-box">
-<div class="limit-item"><small>Max File Size</small><b>20 MB</b></div>
-<div class="limit-item"><small>Max Duration</small><b>60s (30s rec.)</b></div>
-<div class="limit-item"><small>Target Output</small><b>~1.8 - 2.0 MB</b></div>
-</div>
-<div class="dropzone" id="dropzone" onclick="document.getElementById('file-input').click()">
-<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent)"> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/> </svg>
-<p id="file-label">Click or drag video (.mp4,.mov,.webm)</p>
-<input type="file" id="file-input" accept="video/*" style="display:none">
-</div>
 
-<button class="btn warn" id="install-btn" onclick="installFFmpeg()" style="display:none">Install Engine: 25MB Download</button>
-<button class="btn" id="compress-btn" onclick="startCompression()" disabled>Compress Video</button>
+  <h2>Create Your Account</h2>
+  
+  <!-- Signup Form -->
+  <form id="signupForm" action="/api/signup" method="POST">
+    <div class="form-group">
+      <label>Email:</label><br>
+      <input type="email" required name="email">
+    </div>
+    
+    <div class="form-group">
+      <label>Password:</label><br>
+      <input type="password" required name="password">
+    </div>
 
-<div class="progress-wrap" id="progress-wrap">
-<small id="status-text" style="color:var(--muted)">Ready</small>
-<div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-bar"></div></div>
-</div>
+    
+    <div class="form-group">
+      <label><b>Human Verification:</b> Look at the camera to unlock registration</label>
+      <video id="video" autoplay muted playsinline></video>
+      <button type="button" id="verifyBtn" onclick="scanFace()">Scan My Face</button>
+    </div>
 
-<div class="preview-wrap" id="preview-wrap">
-<div class="stats">
-<div>Original: <b id="orig-size">0 MB</b></div>
-<div>Compressed: <b id="comp-size" style="color:var(--accent)">0 MB</b></div>
-</div>
-<video id="input-video" controls playsinline></video>
-<video id="output-video" controls playsinline></video>
-<a id="download-btn" class="btn" style="text-decoration:none; display:inline-block; line-height:22px;">Download Compressed Video</a>
-</div>
-</div>
+    <p id="statusMessage">Initializing secure human verification module...</p>
 
-<script>
-const { createFFmpeg, fetchFile } = FFmpeg;
-let ffmpeg = null;
-let selectedFile = null;
-let videoDuration = 0;
-let ffmpegReady = false;
+    <!-- The actual submit button is locked by default -->
+    <button type="submit" id="submitAccountBtn" disabled>Register Account</button>
+  </form>
 
-function toast(msg) {
-  const t = document.getElementById('toast');
-  t.innerText = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3500);
-}
+  <script>
+    const video = document.getElementById('video');
+    const verifyBtn = document.getElementById('verifyBtn');
+    const submitBtn = document.getElementById('submitAccountBtn');
+    const statusText = document.getElementById('statusMessage');
 
-// Drag & Drop handlers
-const dropzone = document.getElementById('dropzone');
-dropzone.ondragover = e => e.preventDefault();
-dropzone.ondrop = e => { e.preventDefault(); if (e.dataTransfer.files.length) handleFileSelect(e.dataTransfer.files[0]); };
-document.getElementById('file-input').onchange = e => { if (e.target.files.length) handleFileSelect(e.target.files[0]); };
-
-async function handleFileSelect(file) {
-  if (!file.type.startsWith('video/')) return toast('Please select a valid video file.');
-  if (file.size > 20 * 1024 * 1024) { return toast('File too large! Max allowed input size is 20 MB.'); }
-  try {
-    videoDuration = await getVideoDuration(file);
-    if (videoDuration > 60) { return toast('Video duration exceeds 1 minute limit (60s).'); }
-    selectedFile = file;
-
-    // SHOW VIDEO PREVIEW IMMEDIATELY
-    const inputVideo = document.getElementById('input-video');
-    inputVideo.src = URL.createObjectURL(file);
-    document.getElementById('preview-wrap').style.display = 'block';
-    document.getElementById('orig-size').innerText = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
-    document.getElementById('file-label').innerHTML = `<b>${file.name}</b><br><small style="color:var(--muted)">${(file.size / (1024 * 1024)).toFixed(2)} MB | ${Math.round(videoDuration)}s</small>`;
-
-    // Check if ffmpeg is installed
-    if(!ffmpegReady) {
-      document.getElementById('install-btn').style.display = 'block';
-      document.getElementById('compress-btn').disabled = true;
-    } else {
-      document.getElementById('compress-btn').disabled = false;
+    // 1. Automatically load models and start the webcam when page loads
+    async function setupVerification() {
+      try {
+        // Replace with your actual paths where you host the face-api weights
+        const MODEL_URL = 'https://githubusercontent.com'; 
+        
+        await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+        
+        // Start user webcam stream
+        const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+        video.srcObject = stream;
+        
+        statusText.innerText = "Camera active. Position your face and click 'Scan My Face'.";
+      } catch (err) {
+        statusText.className = "error";
+        statusText.innerText = "Camera access denied or models failed to load.";
+        verifyBtn.disabled = true;
+      }
     }
-  } catch (err) { toast('Failed to inspect video duration.'); }
-}
 
-function getVideoDuration(file) {
-  return new Promise((resolve, reject) => {
-    const video = document.createElement('video');
-    video.preload = 'metadata';
-    video.onloadedmetadata = () => { window.URL.revokeObjectURL(video.src); resolve(video.duration); };
-    video.onerror = () => reject('Invalid video element');
-    video.src = URL.createObjectURL(file);
-  });
-}
+    // 2. Scan the face locally on button click
+    async function scanFace() {
+      statusText.innerText = "Analyzing biometrics locally...";
+      verifyBtn.disabled = true;
 
-async function installFFmpeg() {
-  const btn = document.getElementById('install-btn');
-  const statusText = document.getElementById('status-text');
-  const progressWrap = document.getElementById('progress-wrap');
-  btn.disabled = true;
-  progressWrap.style.display = 'block';
-  statusText.innerText = 'Downloading FFmpeg Engine... 25MB';
+      // Detect single face in the current video frame
+      const detection = await faceapi.detectSingleFace(video);
 
-  ffmpeg = createFFmpeg({ log: false, corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js' });
-  await ffmpeg.load();
+      if (detection) {
+        // High confidence that a human face is looking at the camera
+        statusText.className = "success";
+        statusText.innerText = `✓ Human verification successful! (Confidence: ${(detection.score * 100).toFixed(0)}%)`;
+        
+        // UNLOCK the backend submit button
+        submitBtn.disabled = false;
+        
+        // Optional: Turn off the webcam to save battery/privacy
+        const stream = video.srcObject;
+        stream.getTracks().forEach(track => track.stop());
+      } else {
+        statusText.className = "error";
+        statusText.innerText = "✗ Verification failed. No clear face detected. Try moving to a brighter room.";
+        verifyBtn.disabled = false;
+      }
+    }
 
-  ffmpegReady = true;
-  btn.style.display = 'none';
-  document.getElementById('compress-btn').disabled = false;
-  statusText.innerText = 'Engine Ready!';
-  toast('Engine Installed!');
-  setTimeout(()=> progressWrap.style.display = 'none', 1500);
-}
-
-async function startCompression() {
-  if (!selectedFile) return;
-  if(!ffmpegReady) return toast('Please click "Install Engine" first');
-
-  const btn = document.getElementById('compress-btn');
-  const progressWrap = document.getElementById('progress-wrap');
-  const progressBar = document.getElementById('progress-bar');
-  const statusText = document.getElementById('status-text');
-  btn.disabled = true;
-  progressWrap.style.display = 'block';
-  progressBar.style.width = '0%';
-
-  try {
-    ffmpeg.setProgress(({ ratio }) => {
-      const pct = Math.min(Math.max(Math.round(ratio * 100), 0), 100);
-      progressBar.style.width = pct + '%';
-      statusText.innerText = `Compressing video... ${pct}%`;
-    });
-
-    const inputName = 'input_' + Date.now() + '.mp4';
-    const outputName = 'compressed_' + Date.now() + '.mp4';
-    statusText.innerText = 'Reading file input...';
-    ffmpeg.FS('writeFile', inputName, await fetchFile(selectedFile));
-
-    const targetSizeBits = 1.8 * 8 * 1024 * 1024;
-    const totalBitrateBps = targetSizeBits / videoDuration;
-    const totalBitrateKbps = Math.floor(totalBitrateBps / 1000);
-    const audioBitrateKbps = 96;
-    const videoBitrateKbps = Math.max(120, totalBitrateKbps - audioBitrateKbps);
-
-    statusText.innerText = 'Encoding video...';
-    await ffmpeg.run(
-      '-i', inputName, '-b:v', `${videoBitrateKbps}k`, '-maxrate', `${Math.floor(videoBitrateKbps * 1.2)}k`, '-bufsize', `${Math.floor(videoBitrateKbps * 2)}k`,
-      '-vf', "scale='min(720,iw)':-2", '-c:v', 'libx264', '-preset', 'ultrafast', '-c:a', 'aac', '-b:a', `${audioBitrateKbps}k`, outputName
-    );
-
-    statusText.innerText = 'Finalizing file...';
-    const data = ffmpeg.FS('readFile', outputName);
-    const compressedBlob = new Blob([data.buffer], { type: 'video/mp4' });
-    const compressedUrl = URL.createObjectURL(compressedBlob);
-
-    document.getElementById('comp-size').innerText = (compressedBlob.size / (1024 * 1024)).toFixed(2) + ' MB';
-    const outVideo = document.getElementById('output-video');
-    outVideo.src = compressedUrl;
-    const dlBtn = document.getElementById('download-btn');
-    dlBtn.href = compressedUrl;
-    dlBtn.download = 'compressed_golviral.mp4';
-
-    ffmpeg.FS('unlink', inputName);
-    ffmpeg.FS('unlink', outputName);
-    toast('Compression Done!');
-  } catch (err) {
-    console.error(err);
-    toast('Compression failed. Try MP4 format.');
-  } finally {
-    btn.disabled = false;
-    progressWrap.style.display = 'none';
-  }
-}
-</script>
-
-<!-- ERUDA CONSOLE FOR PHONE DEBUGGING -->
-<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-<script>eruda.init();</script>
+    window.onload = setupVerification;
+  </script>
 </body>
 </html>
