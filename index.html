@@ -99,7 +99,7 @@
     // 1. Load models from YOUR github
     async function initAI() {
       try {
-        const MODEL_URL = './models'; // <- loads from your /models/ folder
+        const MODEL_URL = '/mini-R-frontend-/models';
         await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
         await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
         // REMOVED faceRecognitionNet because we didn't upload it
