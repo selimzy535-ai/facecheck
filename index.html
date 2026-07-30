@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Biometric Identity Verification</title>
-  <!-- CDN for face-api.js script only -->
-  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <!-- REMOVED defer so faceapi loads before our script -->
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
   <style>
     :root {
       --bg-color: #0f172a; --card-bg: #1e293b; --primary: #3b82f6;
@@ -92,36 +92,26 @@
     let currentStep = 0;
     let selectedChallenges = [];
     let trackingLoopId = null;
-    let faceHash = null;
     
     const CHALLENGE_POOL = ['BLINK', 'LOOK_LEFT', 'LOOK_RIGHT', 'LOOK_UP'];
 
-    // 1. Load models from YOUR github
-  async function initAI() {
-  try {
-    // Wait for faceapi script to load
-    if (typeof faceapi === 'undefined') {
-      await new Promise(resolve => setTimeout(resolve, 500));
+    async function initAI() {
+      try {
+        const MODEL_URL = '/facecheck/models';
+        await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+        
+        modelsLoaded = true;
+        badge.innerText = "Connecting Webcam...";
+        badge.className = "status-badge ready";
+        startWebcam();
+      } catch (err) {
+        badge.innerText = "Fatal: AI Network Error";
+        badge.className = "status-badge error";
+        console.error("Model Loading Error:", err);
+      }
     }
-    
-    const MODEL_URL = '/facecheck/models';
-    console.log("Loading models from:", MODEL_URL); // for debugging
-    
-    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-    
-    modelsLoaded = true;
-    badge.innerText = "Connecting Webcam...";
-    badge.className = "status-badge ready";
-    startWebcam();
-  } catch (err) {
-    badge.innerText = "Fatal: AI Network Error";
-    badge.className = "status-badge error";
-    console.error("Model Loading Error:", err);
-  }
-}
 
-    // 2. Open Camera
     async function startWebcam() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
@@ -134,7 +124,6 @@
       }
     }
 
-    // 3. Start Test
     function startLivenessTest() {
       if (!modelsLoaded || runningTest) return;
       runningTest = true;
@@ -159,7 +148,6 @@
       if (activeTask === 'LOOK_UP') instruction.innerText = "Tilt your head UPWARDS";
     }
 
-    // 4. Detection Loop
     async function executeTrackingLoop() {
       if (!runningTest) return;
       const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
@@ -223,7 +211,6 @@
       alert(`Registration Successful!\nEmail: ${email}\n\nLiveness Check Passed`);
     }
 
-    // Init
     window.onload = initAI;
   </script>
 </body>
