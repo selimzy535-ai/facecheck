@@ -97,23 +97,29 @@
     const CHALLENGE_POOL = ['BLINK', 'LOOK_LEFT', 'LOOK_RIGHT', 'LOOK_UP'];
 
     // 1. Load models from YOUR github
-    async function initAI() {
-      try {
-        const MODEL_URL = '/facecheck/models';
-        await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-        // REMOVED faceRecognitionNet because we didn't upload it
-        
-        modelsLoaded = true;
-        badge.innerText = "Connecting Webcam...";
-        badge.className = "status-badge ready";
-        startWebcam();
-      } catch (err) {
-        badge.innerText = "Fatal: AI Network Error";
-        badge.className = "status-badge error";
-        console.error("Model Loading Error:", err);
-      }
+  async function initAI() {
+  try {
+    // Wait for faceapi script to load
+    if (typeof faceapi === 'undefined') {
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
+    
+    const MODEL_URL = '/facecheck/models';
+    console.log("Loading models from:", MODEL_URL); // for debugging
+    
+    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+    
+    modelsLoaded = true;
+    badge.innerText = "Connecting Webcam...";
+    badge.className = "status-badge ready";
+    startWebcam();
+  } catch (err) {
+    badge.innerText = "Fatal: AI Network Error";
+    badge.className = "status-badge error";
+    console.error("Model Loading Error:", err);
+  }
+}
 
     // 2. Open Camera
     async function startWebcam() {
