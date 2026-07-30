@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Biometric Identity Verification</title>
-  <!-- REMOVED defer so faceapi loads before our script -->
   <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
   <style>
     :root {
@@ -14,34 +13,34 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
     body { background-color: var(--bg-color); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-   .container { background-color: var(--card-bg); width: 100%; max-width: 450px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); border: 1px solid #334155; }
+  .container { background-color: var(--card-bg); width: 100%; max-width: 450px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); border: 1px solid #334155; }
     h2 { font-size: 24px; font-weight: 600; margin-bottom: 8px; text-align: center; }
-   .subtitle { color: var(--text-muted); font-size: 14px; text-align: center; margin-bottom: 25px; }
-   .form-group { margin-bottom: 20px; }
+  .subtitle { color: var(--text-muted); font-size: 14px; text-align: center; margin-bottom: 25px; }
+  .form-group { margin-bottom: 20px; }
     label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; color: #cbd5e1; }
     input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #475569; background-color: #0f172a; color: white; font-size: 15px; outline: none; transition: border 0.2s; }
     input:focus { border-color: var(--primary); }
-   .scanner-wrapper { position: relative; width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 12px; overflow: hidden; margin-bottom: 20px; border: 2px solid #334155; }
+  .scanner-wrapper { position: relative; width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 12px; overflow: hidden; margin-bottom: 20px; border: 2px solid #334155; }
     video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-   .overlay-box { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 15px; pointer-events: none; }
-   .status-badge { align-self: center; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px); padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; border: 1px solid #475569; letter-spacing: 0.5px; }
-   .status-badge.loading { color: #f59e0b; border-color: #f59e0b; }
-   .status-badge.ready { color: var(--primary); border-color: var(--primary); }
-   .status-badge.success { color: var(--success); border-color: var(--success); }
-   .status-badge.error { color: var(--danger); border-color: var(--danger); }
-   .challenge-card { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); padding: 15px; border-radius: 10px; border-left: 4px solid var(--primary); display: flex; flex-direction: column; gap: 4px; transition: all 0.3s; }
-   .challenge-card.success { border-left-color: var(--success); }
-   .challenge-title { font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 1px; }
-   .challenge-instruction { font-size: 16px; font-weight: 600; color: #fff; }
-   .progress-dots { display: flex; gap: 6px; margin-top: 5px; }
-   .dot { width: 8px; height: 8px; border-radius: 50%; background: #475569; transition: background 0.3s; }
-   .dot.active { background: var(--primary); transform: scale(1.2); }
-   .dot.done { background: var(--success); }
-   .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; background-color: var(--primary); color: white; display: flex; align-items: center; justify-content: center; gap: 8px; }
-   .btn:hover:not(:disabled) { background-color: var(--primary-hover); }
-   .btn:disabled { background-color: #334155; color: #64748b; cursor: not-allowed; }
-   .btn-submit { background-color: var(--success); margin-top: 10px; display: none; }
-   .btn-submit:hover { background-color: #059669; }
+  .overlay-box { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 15px; pointer-events: none; }
+  .status-badge { align-self: center; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px); padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; border: 1px solid #475569; letter-spacing: 0.5px; }
+  .status-badge.loading { color: #f59e0b; border-color: #f59e0b; }
+  .status-badge.ready { color: var(--primary); border-color: var(--primary); }
+  .status-badge.success { color: var(--success); border-color: var(--success); }
+  .status-badge.error { color: var(--danger); border-color: var(--danger); }
+  .challenge-card { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); padding: 15px; border-radius: 10px; border-left: 4px solid var(--primary); display: flex; flex-direction: column; gap: 4px; transition: all 0.3s; }
+  .challenge-card.success { border-left-color: var(--success); }
+  .challenge-title { font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 1px; }
+  .challenge-instruction { font-size: 16px; font-weight: 600; color: #fff; }
+  .progress-dots { display: flex; gap: 6px; margin-top: 5px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #475569; transition: background 0.3s; }
+  .dot.active { background: var(--primary); transform: scale(1.2); }
+  .dot.done { background: var(--success); }
+  .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; background-color: var(--primary); color: white; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn:hover:not(:disabled) { background-color: var(--primary-hover); }
+  .btn:disabled { background-color: #334155; color: #64748b; cursor: not-allowed; }
+  .btn-submit { background-color: var(--success); margin-top: 10px; display: none; }
+  .btn-submit:hover { background-color: #059669; }
   </style>
 </head>
 <body>
@@ -86,21 +85,23 @@
     const submitBtn = document.getElementById('submitBtn');
     const dot1 = document.getElementById('dot1');
     const dot2 = document.getElementById('dot2');
-    
+
     let modelsLoaded = false;
     let runningTest = false;
     let currentStep = 0;
     let selectedChallenges = [];
     let trackingLoopId = null;
-    
+
     const CHALLENGE_POOL = ['BLINK', 'LOOK_LEFT', 'LOOK_RIGHT', 'LOOK_UP'];
 
     async function initAI() {
       try {
-        const MODEL_URL = '/facecheck/models';
+        // LOAD DIRECTLY FROM CDN - NO FOLDER NEEDED
+        const MODEL_URL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights';
+
         await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
         await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-        
+
         modelsLoaded = true;
         badge.innerText = "Connecting Webcam...";
         badge.className = "status-badge ready";
