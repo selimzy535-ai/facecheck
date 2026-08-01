@@ -1,218 +1,231 @@
+Check this do I use this or the folder uploading to GitHub will be more faster 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Biometric Identity Verification</title>
-  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-  <style>
-    :root {
-      --bg-color: #0f172a; --card-bg: #1e293b; --primary: #3b82f6;
-      --primary-hover: #2563eb; --success: #10b981; --danger: #ef4444;
-      --text: #f8fafc; --text-muted: #94a3b8;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
-    body { background-color: var(--bg-color); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-  .container { background-color: var(--card-bg); width: 100%; max-width: 450px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); border: 1px solid #334155; }
-    h2 { font-size: 24px; font-weight: 600; margin-bottom: 8px; text-align: center; }
-  .subtitle { color: var(--text-muted); font-size: 14px; text-align: center; margin-bottom: 25px; }
-  .form-group { margin-bottom: 20px; }
-    label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; color: #cbd5e1; }
-    input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #475569; background-color: #0f172a; color: white; font-size: 15px; outline: none; transition: border 0.2s; }
-    input:focus { border-color: var(--primary); }
-  .scanner-wrapper { position: relative; width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 12px; overflow: hidden; margin-bottom: 20px; border: 2px solid #334155; }
-    video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-  .overlay-box { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 15px; pointer-events: none; }
-  .status-badge { align-self: center; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px); padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; border: 1px solid #475569; letter-spacing: 0.5px; }
-  .status-badge.loading { color: #f59e0b; border-color: #f59e0b; }
-  .status-badge.ready { color: var(--primary); border-color: var(--primary); }
-  .status-badge.success { color: var(--success); border-color: var(--success); }
-  .status-badge.error { color: var(--danger); border-color: var(--danger); }
-  .challenge-card { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); padding: 15px; border-radius: 10px; border-left: 4px solid var(--primary); display: flex; flex-direction: column; gap: 4px; transition: all 0.3s; }
-  .challenge-card.success { border-left-color: var(--success); }
-  .challenge-title { font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 1px; }
-  .challenge-instruction { font-size: 16px; font-weight: 600; color: #fff; }
-  .progress-dots { display: flex; gap: 6px; margin-top: 5px; }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: #475569; transition: background 0.3s; }
-  .dot.active { background: var(--primary); transform: scale(1.2); }
-  .dot.done { background: var(--success); }
-  .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; background-color: var(--primary); color: white; display: flex; align-items: center; justify-content: center; gap: 8px; }
-  .btn:hover:not(:disabled) { background-color: var(--primary-hover); }
-  .btn:disabled { background-color: #334155; color: #64748b; cursor: not-allowed; }
-  .btn-submit { background-color: var(--success); margin-top: 10px; display: none; }
-  .btn-submit:hover { background-color: #059669; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biometric Identity Verification</title>
+<!-- FIXED CDN -->
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<style>
+:root { --bg-color: #0f172a; --card-bg: #1e293b; --primary: #3b82f6; --primary-hover: #2563eb; --success: #10b981; --danger: #ef4444; --text: #f8fafc; --text-muted: #94a3b8; }
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+body { background-color: var(--bg-color); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.container { background-color: var(--card-bg); width: 100%; max-width: 450px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); border: 1px solid #334155; }
+h2 { font-size: 24px; font-weight: 600; margin-bottom: 8px; text-align: center; }
+.subtitle { color: var(--text-muted); font-size: 14px; text-align: center; margin-bottom: 25px; }
+.form-group { margin-bottom: 20px; }
+label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; color: #cbd5e1; }
+input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #475569; background-color: #0f172a; color: white; font-size: 15px; outline: none; transition: border 0.2s; }
+input:focus { border-color: var(--primary); }
+.scanner-wrapper { position: relative; width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 12px; overflow: hidden; margin-bottom: 20px; border: 2px solid #334155; }
+video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+.overlay-box { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 15px; pointer-events: none; }
+.status-badge { align-self: center; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px); padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; border: 1px solid #475569; letter-spacing: 0.5px; }
+.status-badge.loading { color: #f59e0b; border-color: #f59e0b; }
+.status-badge.ready { color: var(--primary); border-color: var(--primary); }
+.status-badge.success { color: var(--success); border-color: var(--success); }
+.status-badge.error { color: var(--danger); border-color: var(--danger); }
+.challenge-card { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); padding: 15px; border-radius: 10px; border-left: 4px solid var(--primary); display: flex; flex-direction: column; gap: 4px; transition: all 0.3s; }
+.challenge-card.success { border-left-color: var(--success); }
+.challenge-title { font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 1px; }
+.challenge-instruction { font-size: 16px; font-weight: 600; color: #fff; }
+.progress-dots { display: flex; gap: 6px; margin-top: 5px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: #475569; transition: background 0.3s; }
+.dot.active { background: var(--primary); transform: scale(1.2); }
+.dot.done { background: var(--success); }
+.btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; background-color: var(--primary); color: white; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.btn:hover:not(:disabled) { background-color: var(--primary-hover); }
+.btn:disabled { background-color: #334155; color: #64748b; cursor: not-allowed; }
+.btn-submit { background-color: var(--success); margin-top: 10px; display: none; }
+.btn-submit:hover { background-color: #059669; }
+</style>
 </head>
 <body>
-  <div class="container">
-    <h2>Secure Registration</h2>
-    <p class="subtitle">Complete human verification to activate your account</p>
-    <form id="signupForm" onsubmit="handleFormSubmit(event)">
-      <div class="form-group">
-        <label>Email Address</label>
-        <input id="email" type="email" placeholder="name@example.com" required>
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input id="password" type="password" placeholder="••••" required>
-      </div>
-      <label>Identity & Liveness Verification</label>
-      <div class="scanner-wrapper">
-        <video id="webcam" autoplay muted playsinline></video>
-        <div class="overlay-box">
-          <div id="badge" class="status-badge loading">Initializing AI Modules...</div>
-          <div id="challengeBox" class="challenge-card" style="opacity: 0;">
-            <div class="challenge-title">Active Security Challenge</div>
-            <div id="instruction" class="challenge-instruction">Please wait...</div>
-            <div class="progress-dots">
-              <div id="dot1" class="dot"></div>
-              <div id="dot2" class="dot"></div>
-            </div>
+<div class="container">
+  <h2>Secure Registration</h2>
+  <p class="subtitle">Complete human verification to activate your account</p>
+  <form id="signupForm" onsubmit="handleFormSubmit(event)">
+    <div class="form-group">
+      <label>Email Address</label>
+      <input id="email" type="email" placeholder="name@example.com" required>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input id="password" type="password" placeholder="••••" required>
+    </div>
+    <label>Identity & Liveness Verification</label>
+    <div class="scanner-wrapper">
+      <video id="webcam" autoplay muted playsinline></video>
+      <div class="overlay-box">
+        <div id="badge" class="status-badge loading">Initializing AI Modules...</div>
+        <div id="challengeBox" class="challenge-card" style="opacity: 0;">
+          <div class="challenge-title">Active Security Challenge</div>
+          <div id="instruction" class="challenge-instruction">Please wait...</div>
+          <div class="progress-dots">
+            <div id="dot1" class="dot"></div>
+            <div id="dot2" class="dot"></div>
           </div>
         </div>
       </div>
-      <button type="button" id="startBtn" class="btn" onclick="startLivenessTest()" disabled> Start Face Scan </button>
-      <button type="submit" id="submitBtn" class="btn btn-submit"> ✓ Complete Registration </button>
-    </form>
-  </div>
+    </div>
+    <button type="button" id="startBtn" class="btn" onclick="startLivenessTest()" disabled> Start Face Scan </button>
+    <button type="submit" id="submitBtn" class="btn btn-submit"> ✓ Complete Registration </button>
+  </form>
+</div>
 
-  <script>
-    const video = document.getElementById('webcam');
-    const badge = document.getElementById('badge');
-    const challengeBox = document.getElementById('challengeBox');
-    const instruction = document.getElementById('instruction');
-    const startBtn = document.getElementById('startBtn');
-    const submitBtn = document.getElementById('submitBtn');
-    const dot1 = document.getElementById('dot1');
-    const dot2 = document.getElementById('dot2');
+<script>
+const video = document.getElementById('webcam');
+const badge = document.getElementById('badge');
+const challengeBox = document.getElementById('challengeBox');
+const instruction = document.getElementById('instruction');
+const startBtn = document.getElementById('startBtn');
+const submitBtn = document.getElementById('submitBtn');
+const dot1 = document.getElementById('dot1');
+const dot2 = document.getElementById('dot2');
 
-    let modelsLoaded = false;
-    let runningTest = false;
-    let currentStep = 0;
-    let selectedChallenges = [];
-    let trackingLoopId = null;
+let modelsLoaded = false;
+let runningTest = false;
+let currentStep = 0;
+let selectedChallenges = [];
+let trackingLoopId = null;
+let faceHash = null; // for testing: we will generate hash
 
-    const CHALLENGE_POOL = ['BLINK', 'LOOK_LEFT', 'LOOK_RIGHT', 'LOOK_UP'];
+const CHALLENGE_POOL = ['BLINK', 'LOOK_LEFT', 'LOOK_RIGHT', 'LOOK_UP'];
 
-    async function initAI() {
-      try {
-        // LOAD DIRECTLY FROM CDN - NO FOLDER NEEDED
-        const MODEL_URL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights';
+// 1. Load models from CDN
+async function initAI() {
+  try {
+    const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL); // for hash
+    modelsLoaded = true;
+    badge.innerText = "Connecting Webcam...";
+    badge.className = "status-badge ready";
+    startWebcam();
+  } catch (err) {
+    badge.innerText = "Fatal: AI Network Error";
+    badge.className = "status-badge error";
+    console.error("Model Loading Error:", err);
+  }
+}
 
-        await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+// 2. Open Camera
+async function startWebcam() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+    video.srcObject = stream;
+    startBtn.disabled = false;
+    badge.innerText = "Ready to Scan";
+  } catch (err) {
+    badge.innerText = "Camera Access Denied";
+    badge.className = "status-badge error";
+  }
+}
 
-        modelsLoaded = true;
-        badge.innerText = "Connecting Webcam...";
-        badge.className = "status-badge ready";
-        startWebcam();
-      } catch (err) {
-        badge.innerText = "Fatal: AI Network Error";
-        badge.className = "status-badge error";
-        console.error("Model Loading Error:", err);
+// 3. Start Test
+function startLivenessTest() {
+  if (!modelsLoaded || runningTest) return;
+  runningTest = true;
+  startBtn.disabled = true;
+  currentStep = 0;
+  challengeBox.style.opacity = "1";
+  badge.innerText = "Verifying Identity...";
+  badge.className = "status-badge ready";
+  const shuffled = [...CHALLENGE_POOL].sort(() => 0.5 - Math.random());
+  selectedChallenges = [shuffled[0], shuffled[1]];
+  updateChallengeUI();
+  executeTrackingLoop();
+}
+
+function updateChallengeUI() {
+  dot1.className = currentStep === 0? "dot active" : "dot done";
+  dot2.className = currentStep === 1? "dot active" : "dot";
+  const activeTask = selectedChallenges[currentStep];
+  if (activeTask === 'BLINK') instruction.innerText = "Blink your eyes 2 times";
+  if (activeTask === 'LOOK_LEFT') instruction.innerText = "Turn your face to the LEFT";
+  if (activeTask === 'LOOK_RIGHT') instruction.innerText = "Turn your face to the RIGHT";
+  if (activeTask === 'LOOK_UP') instruction.innerText = "Tilt your head UPWARDS";
+}
+
+// 4. Detection Loop
+async function executeTrackingLoop() {
+  if (!runningTest) return;
+  const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+
+  if (detection) {
+    const landmarks = detection.landmarks;
+    const activeTask = selectedChallenges[currentStep];
+    let taskPassed = false;
+
+    if (activeTask === 'BLINK') {
+      const ear = getEAR(landmarks.getLeftEye());
+      if (ear < 0.23) taskPassed = true; // simplified blink
+    }
+    else if (activeTask === 'LOOK_LEFT' || activeTask === 'LOOK_RIGHT') {
+      const noseX = landmarks.getNose()[3].x;
+      const jaw = landmarks.getJawOutline();
+      const width = jaw[16].x - jaw[0].x;
+      const ratio = (noseX - jaw[0].x) / width;
+      if (activeTask === 'LOOK_LEFT' && ratio < 0.35) taskPassed = true;
+      if (activeTask === 'LOOK_RIGHT' && ratio > 0.65) taskPassed = true;
+    }
+    else if (activeTask === 'LOOK_UP') {
+      const noseY = landmarks.getNose()[3].y;
+      const browY = landmarks.getEyebrowLeft()[1].y;
+      if (noseY < browY - 20) taskPassed = true;
+    }
+
+    if (taskPassed) {
+      if (currentStep === 0) {
+        currentStep = 1; updateChallengeUI();
+        await new Promise(resolve => setTimeout(resolve, 800));
+      } else {
+        // Generate hash on success
+        faceHash = await sha256(JSON.stringify(Array.from(detection.descriptor)));
+        validationCompleteSuccess();
+        return;
       }
     }
+  }
+  trackingLoopId = requestAnimationFrame(executeTrackingLoop);
+}
 
-    async function startWebcam() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
-        video.srcObject = stream;
-        startBtn.disabled = false;
-        badge.innerText = "Ready to Scan";
-      } catch (err) {
-        badge.innerText = "Camera Access Denied";
-        badge.className = "status-badge error";
-      }
-    }
+function getEAR(eye) {
+  const a = Math.hypot(eye[1].x - eye[5].x, eye[1].y - eye[5].y);
+  const b = Math.hypot(eye[2].x - eye[4].x, eye[2].y - eye[4].y);
+  const c = Math.hypot(eye[0].x - eye[3].x, eye[0].y - eye[3].y);
+  return (a + b) / (2.0 * c);
+}
 
-    function startLivenessTest() {
-      if (!modelsLoaded || runningTest) return;
-      runningTest = true;
-      startBtn.disabled = true;
-      currentStep = 0;
-      challengeBox.style.opacity = "1";
-      badge.innerText = "Verifying Identity...";
-      badge.className = "status-badge ready";
-      const shuffled = [...CHALLENGE_POOL].sort(() => 0.5 - Math.random());
-      selectedChallenges = [shuffled[0], shuffled[1]];
-      updateChallengeUI();
-      executeTrackingLoop();
-    }
+async function sha256(message) {
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
 
-    function updateChallengeUI() {
-      dot1.className = currentStep === 0? "dot active" : "dot done";
-      dot2.className = currentStep === 1? "dot active" : "dot";
-      const activeTask = selectedChallenges[currentStep];
-      if (activeTask === 'BLINK') instruction.innerText = "Blink your eyes 2 times";
-      if (activeTask === 'LOOK_LEFT') instruction.innerText = "Turn your face to the LEFT";
-      if (activeTask === 'LOOK_RIGHT') instruction.innerText = "Turn your face to the RIGHT";
-      if (activeTask === 'LOOK_UP') instruction.innerText = "Tilt your head UPWARDS";
-    }
+function validationCompleteSuccess() {
+  cancelAnimationFrame(trackingLoopId);
+  badge.innerText = "✓ Identity Verified";
+  badge.className = "status-badge success";
+  challengeBox.className = "challenge-card success";
+  instruction.innerText = "Verification passed. Hash: " + faceHash.slice(0,10) + "...";
+  dot2.className = "dot done";
+  if (video.srcObject) video.srcObject.getTracks().forEach(track => track.stop());
+  startBtn.style.display = "none";
+  submitBtn.style.display = "flex";
+}
 
-    async function executeTrackingLoop() {
-      if (!runningTest) return;
-      const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
-      if (detection) {
-        const landmarks = detection.landmarks;
-        const activeTask = selectedChallenges[currentStep];
-        let taskPassed = false;
+function handleFormSubmit(e) {
+  e.preventDefault();
+  const email = document.getElementById('email').value;
+  alert(`Registration Successful!\nEmail: ${email}\nFaceHash: ${faceHash}\n\nSend this hash to your backend to block multi-accounts`);
+}
 
-        if (activeTask === 'BLINK') {
-          const ear = getEAR(landmarks.getLeftEye());
-          if (ear < 0.23) taskPassed = true;
-        } else if (activeTask === 'LOOK_LEFT' || activeTask === 'LOOK_RIGHT') {
-          const noseX = landmarks.getNose()[3].x;
-          const jaw = landmarks.getJawOutline();
-          const width = jaw[16].x - jaw[0].x;
-          const ratio = (noseX - jaw[0].x) / width;
-          if (activeTask === 'LOOK_LEFT' && ratio < 0.35) taskPassed = true;
-          if (activeTask === 'LOOK_RIGHT' && ratio > 0.65) taskPassed = true;
-        } else if (activeTask === 'LOOK_UP') {
-          const noseY = landmarks.getNose()[3].y;
-          const browY = landmarks.getEyebrowLeft()[1].y;
-          if (noseY < browY - 20) taskPassed = true;
-        }
-
-        if (taskPassed) {
-          if (currentStep === 0) {
-            currentStep = 1;
-            updateChallengeUI();
-            await new Promise(resolve => setTimeout(resolve, 800));
-          } else {
-            validationCompleteSuccess();
-            return;
-          }
-        }
-      }
-      trackingLoopId = requestAnimationFrame(executeTrackingLoop);
-    }
-
-    function getEAR(eye) {
-      const a = Math.hypot(eye[1].x - eye[5].x, eye[1].y - eye[5].y);
-      const b = Math.hypot(eye[2].x - eye[4].x, eye[2].y - eye[4].y);
-      const c = Math.hypot(eye[0].x - eye[3].x, eye[0].y - eye[3].y);
-      return (a + b) / (2.0 * c);
-    }
-
-    function validationCompleteSuccess() {
-      cancelAnimationFrame(trackingLoopId);
-      badge.innerText = "✓ Identity Verified";
-      badge.className = "status-badge success";
-      challengeBox.className = "challenge-card success";
-      instruction.innerText = "Verification passed. You are human.";
-      dot2.className = "dot done";
-      if (video.srcObject) video.srcObject.getTracks().forEach(track => track.stop());
-      startBtn.style.display = "none";
-      submitBtn.style.display = "flex";
-    }
-
-    function handleFormSubmit(e) {
-      e.preventDefault();
-      const email = document.getElementById('email').value;
-      alert(`Registration Successful!\nEmail: ${email}\n\nLiveness Check Passed`);
-    }
-
-    window.onload = initAI;
-  </script>
+// Init
+window.onload = initAI;
+</script>
 </body>
 </html>
