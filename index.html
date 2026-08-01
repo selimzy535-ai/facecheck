@@ -3,13 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Biometric Identity Verification - FAST</title>
-<!-- FASTER: Use specific version + defer + preload hints -->
+<title>Biometric Identity Verification - Optimized</title>
+
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+
 <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/dist/face-api.min.js"></script>
+
 <style>
-:root { --bg-color: #0f172a; --card-bg: #1e293b; --primary: #3b82f6; --primary-hover: #2563eb; --success: #10b981; --danger: #ef4444; --text: #f8fafc; --text-muted: #94a3b8; }
+:root { 
+  --bg-color: #0f172a; 
+  --card-bg: #1e293b; 
+  --primary: #3b82f6; 
+  --primary-hover: #2563eb; 
+  --success: #10b981; 
+  --danger: #ef4444; 
+  --text: #f8fafc; 
+  --text-muted: #94a3b8; 
+}
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
 body { background-color: var(--bg-color); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
 .container { background-color: var(--card-bg); width: 100%; max-width: 450px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); border: 1px solid #334155; }
@@ -32,7 +43,7 @@ video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
 .challenge-title { font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 1px; }
 .challenge-instruction { font-size: 16px; font-weight: 600; color: #fff; }
 .progress-dots { display: flex; gap: 6px; margin-top: 5px; }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: #475569; transition: background 0.3s; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: #475569; transition: background 0.3s, transform 0.3s; }
 .dot.active { background: var(--primary); transform: scale(1.2); }
 .dot.done { background: var(--success); }
 .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; background-color: var(--primary); color: white; display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -44,36 +55,39 @@ video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
 </head>
 <body>
 <div class="container">
-<h2>Secure Registration</h2>
-<p class="subtitle">Complete human verification to activate your account</p>
-<form id="signupForm" onsubmit="handleFormSubmit(event)">
-<div class="form-group">
-<label>Email Address</label>
-<input id="email" type="email" placeholder="name@example.com" required>
+  <h2>Secure Registration</h2>
+  <p class="subtitle">Complete human verification to activate your account</p>
+  <form id="signupForm" onsubmit="handleFormSubmit(event)">
+    <div class="form-group">
+      <label for="email">Email Address</label>
+      <input id="email" type="email" placeholder="name@example.com" required>
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input id="password" type="password" placeholder="••••" required>
+    </div>
+    
+    <label>Identity & Liveness Verification</label>
+    <div class="scanner-wrapper">
+      <video id="webcam" autoplay muted playsinline></video>
+      <div class="overlay-box">
+        <div id="badge" class="status-badge loading">Loading AI Engine...</div>
+        <div id="challengeBox" class="challenge-card" style="opacity: 0;">
+          <div class="challenge-title">Active Security Challenge</div>
+          <div id="instruction" class="challenge-instruction">Please wait...</div>
+          <div class="progress-dots">
+            <div id="dot1" class="dot"></div>
+            <div id="dot2" class="dot"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <button type="button" id="startBtn" class="btn" onclick="startLivenessTest()" disabled>Start Face Scan</button>
+    <button type="submit" id="submitBtn" class="btn btn-submit">✓ Complete Registration</button>
+  </form>
 </div>
-<div class="form-group">
-<label>Password</label>
-<input id="password" type="password" placeholder="••••" required>
-</div>
-<label>Identity & Liveness Verification</label>
-<div class="scanner-wrapper">
-<video id="webcam" autoplay muted playsinline></video>
-<div class="overlay-box">
-<div id="badge" class="status-badge loading">Loading AI... 0%</div>
-<div id="challengeBox" class="challenge-card" style="opacity: 0;">
-<div class="challenge-title">Active Security Challenge</div>
-<div id="instruction" class="challenge-instruction">Please wait...</div>
-<div class="progress-dots">
-<div id="dot1" class="dot"></div>
-<div id="dot2" class="dot"></div>
-</div>
-</div>
-</div>
-</div>
-<button type="button" id="startBtn" class="btn" onclick="startLivenessTest()" disabled> Start Face Scan </button>
-<button type="submit" id="submitBtn" class="btn btn-submit"> ✓ Complete Registration </button>
-</form>
-</div>
+
 <script>
 const video = document.getElementById('webcam');
 const badge = document.getElementById('badge');
@@ -83,6 +97,7 @@ const startBtn = document.getElementById('startBtn');
 const submitBtn = document.getElementById('submitBtn');
 const dot1 = document.getElementById('dot1');
 const dot2 = document.getElementById('dot2');
+
 let modelsLoaded = false;
 let runningTest = false;
 let currentStep = 0;
@@ -91,159 +106,203 @@ let trackingLoopId = null;
 let faceHash = null;
 let blinkCount = 0;
 let lastEar = 0.3;
+let lastFrameTime = 0;
+
+// Optimized Tiny Face Detector Options (inputSize 160 = ultra fast detection)
+let detectorOptions;
+
 const CHALLENGE_POOL = ['BLINK', 'LOOK_LEFT', 'LOOK_RIGHT', 'LOOK_UP'];
 
-// 1. FASTER: Load tiny models from jsDelivr CDN
 async function initAI() {
-try {
-badge.innerText = "Loading AI... 0%";
-// USE TINY MODELS - 1.2MB total vs 7MB before = 10x faster
-const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/model';
-await Promise.all([
-faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL), // TINY = faster
-faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-]);
-modelsLoaded = true;
-badge.innerText = "Connecting Webcam...";
-badge.className = "status-badge ready";
-startWebcam();
-} catch (err) {
-badge.innerText = "Fatal: AI Network Error";
-badge.className = "status-badge error";
-console.error("Model Loading Error:", err);
-}
+  try {
+    badge.innerText = "Loading AI Models...";
+    const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/model';
+    
+    // Load lightweight models concurrently
+    await Promise.all([
+      faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+      faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL),
+      faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+    ]);
+
+    detectorOptions = new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.4 });
+    modelsLoaded = true;
+    badge.innerText = "Connecting Webcam...";
+    badge.className = "status-badge ready";
+    await startWebcam();
+  } catch (err) {
+    badge.innerText = "Fatal: AI Network Error";
+    badge.className = "status-badge error";
+    console.error("Model Loading Error:", err);
+  }
 }
 
-// 2. FASTER: Request lower res camera for speed
 async function startWebcam() {
-try {
-const stream = await navigator.mediaDevices.getUserMedia({
-video: {
-facingMode: "user",
-width: { ideal: 480 }, // 480p instead of 1080p = 4x faster detection
-height: { ideal: 360 }
-}
-});
-video.srcObject = stream;
-startBtn.disabled = false;
-badge.innerText = "Ready to Scan";
-} catch (err) {
-badge.innerText = "Camera Access Denied";
-badge.className = "status-badge error";
-}
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: "user",
+        width: { ideal: 480 },
+        height: { ideal: 360 },
+        frameRate: { ideal: 30 }
+      }
+    });
+    video.srcObject = stream;
+    startBtn.disabled = false;
+    badge.innerText = "Ready to Scan";
+  } catch (err) {
+    badge.innerText = "Camera Access Denied";
+    badge.className = "status-badge error";
+    console.error("Camera Error:", err);
+  }
 }
 
 function startLivenessTest() {
-if (!modelsLoaded || runningTest) return;
-runningTest = true;
-blinkCount = 0;
-startBtn.disabled = true;
-currentStep = 0;
-challengeBox.style.opacity = "1";
-badge.innerText = "Verifying Identity...";
-badge.className = "status-badge ready";
-const shuffled = [...CHALLENGE_POOL].sort(() => 0.5 - Math.random());
-selectedChallenges = [shuffled[0], shuffled[1]];
-updateChallengeUI();
-executeTrackingLoop();
+  if (!modelsLoaded || runningTest) return;
+  
+  runningTest = true;
+  blinkCount = 0;
+  currentStep = 0;
+  startBtn.disabled = true;
+  challengeBox.style.opacity = "1";
+  badge.innerText = "Verifying Liveness...";
+  badge.className = "status-badge ready";
+
+  // Pick 2 random challenges
+  const shuffled = [...CHALLENGE_POOL].sort(() => 0.5 - Math.random());
+  selectedChallenges = [shuffled[0], shuffled[1]];
+  
+  updateChallengeUI();
+  requestAnimationFrame(executeTrackingLoop);
 }
 
 function updateChallengeUI() {
-dot1.className = currentStep === 0? "dot active" : currentStep > 0? "dot done" : "dot";
-dot2.className = currentStep === 1? "dot active" : currentStep > 1? "dot done" : "dot";
-const activeTask = selectedChallenges[currentStep];
-if (activeTask === 'BLINK') instruction.innerText = "Blink your eyes 2 times";
-if (activeTask === 'LOOK_LEFT') instruction.innerText = "Turn your face to the LEFT";
-if (activeTask === 'LOOK_RIGHT') instruction.innerText = "Turn your face to the RIGHT";
-if (activeTask === 'LOOK_UP') instruction.innerText = "Tilt your head UPWARDS";
+  dot1.className = currentStep === 0 ? "dot active" : currentStep > 0 ? "dot done" : "dot";
+  dot2.className = currentStep === 1 ? "dot active" : currentStep > 1 ? "dot done" : "dot";
+  
+  const activeTask = selectedChallenges[currentStep];
+  if (activeTask === 'BLINK') instruction.innerText = "Blink your eyes 2 times";
+  if (activeTask === 'LOOK_LEFT') instruction.innerText = "Turn your face to the LEFT";
+  if (activeTask === 'LOOK_RIGHT') instruction.innerText = "Turn your face to the RIGHT";
+  if (activeTask === 'LOOK_UP') instruction.innerText = "Tilt your head UPWARDS";
 }
 
-// 3. FASTER: Run detection every 3 frames instead of every frame
-let frameCount = 0;
-async function executeTrackingLoop() {
-if (!runningTest) return;
-frameCount++;
-if(frameCount % 3!== 0) { // skip 2 frames = 3x faster
-trackingLoopId = requestAnimationFrame(executeTrackingLoop);
-return;
+async function executeTrackingLoop(timestamp) {
+  if (!runningTest) return;
+
+  // Throttle detection runs to every ~100ms (10 FPS is optimal for real-time tracking without lagging UI)
+  if (timestamp - lastFrameTime < 100) {
+    trackingLoopId = requestAnimationFrame(executeTrackingLoop);
+    return;
+  }
+  lastFrameTime = timestamp;
+
+  try {
+    // Light detection (No descriptor calculated here to maintain high speed)
+    const detection = await faceapi.detectSingleFace(video, detectorOptions).withFaceLandmarks(true);
+
+    if (detection) {
+      const landmarks = detection.landmarks;
+      const activeTask = selectedChallenges[currentStep];
+      let taskPassed = false;
+
+      if (activeTask === 'BLINK') {
+        const ear = getEAR(landmarks.getLeftEye());
+        if (lastEar > 0.25 && ear < 0.20) blinkCount++;
+        lastEar = ear;
+        if (blinkCount >= 2) taskPassed = true;
+      } else if (activeTask === 'LOOK_LEFT' || activeTask === 'LOOK_RIGHT') {
+        const noseX = landmarks.getNose()[3].x;
+        const jaw = landmarks.getJawOutline();
+        const width = jaw[16].x - jaw[0].x;
+        const ratio = (noseX - jaw[0].x) / width;
+        if (activeTask === 'LOOK_LEFT' && ratio < 0.35) taskPassed = true;
+        if (activeTask === 'LOOK_RIGHT' && ratio > 0.65) taskPassed = true;
+      } else if (activeTask === 'LOOK_UP') {
+        const noseY = landmarks.getNose()[3].y;
+        const browY = landmarks.getEyebrowLeft()[1].y;
+        if (noseY < browY - 12) taskPassed = true;
+      }
+
+      if (taskPassed) {
+        currentStep++;
+        if (currentStep >= selectedChallenges.length) {
+          await finalizeVerification();
+          return;
+        } else {
+          updateChallengeUI();
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Tracking error:", err);
+  }
+
+  if (runningTest) {
+    trackingLoopId = requestAnimationFrame(executeTrackingLoop);
+  }
 }
 
-const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({inputSize: 224})).withFaceLandmarks(true).withFaceDescriptor(); // true = use tiny landmarks
+// Compute descriptor ONCE upon successful completion of all liveness steps
+async function finalizeVerification() {
+  runningTest = false;
+  badge.innerText = "Generating Security Hash...";
+  
+  const finalDetection = await faceapi.detectSingleFace(video, detectorOptions)
+                                      .withFaceLandmarks(true)
+                                      .withFaceDescriptor();
 
-if (detection) {
-const landmarks = detection.landmarks;
-const activeTask = selectedChallenges[currentStep];
-let taskPassed = false;
-
-if (activeTask === 'BLINK') {
-// BETTER BLINK DETECTION
-const ear = getEAR(landmarks.getLeftEye());
-if(lastEar > 0.25 && ear < 0.21) blinkCount++; // detect blink down
-lastEar = ear;
-if(blinkCount >= 2) taskPassed = true;
-} else if (activeTask === 'LOOK_LEFT' || activeTask === 'LOOK_RIGHT') {
-const noseX = landmarks.getNose()[3].x;
-const jaw = landmarks.getJawOutline();
-const width = jaw[16].x - jaw[0].x;
-const ratio = (noseX - jaw[0].x) / width;
-if (activeTask === 'LOOK_LEFT' && ratio < 0.35) taskPassed = true;
-if (activeTask === 'LOOK_RIGHT' && ratio > 0.65) taskPassed = true;
-} else if (activeTask === 'LOOK_UP') {
-const noseY = landmarks.getNose()[3].y;
-const browY = landmarks.getEyebrowLeft()[1].y;
-if (noseY < browY - 15) taskPassed = true;
-}
-
-if (taskPassed) {
-currentStep++;
-if (currentStep >= selectedChallenges.length) {
-faceHash = await sha256(JSON.stringify(Array.from(detection.descriptor)));
-validationCompleteSuccess();
-return;
-} else {
-updateChallengeUI();
-await new Promise(resolve => setTimeout(resolve, 600));
-}
-trackingLoopId = requestAnimationFrame(executeTrackingLoop);
+  if (finalDetection) {
+    faceHash = await sha256(JSON.stringify(Array.from(finalDetection.descriptor)));
+    validationCompleteSuccess();
+  } else {
+    // Retry fallback if face was lost at the exact moment of completion
+    runningTest = true;
+    requestAnimationFrame(executeTrackingLoop);
+  }
 }
 
 function getEAR(eye) {
-const a = Math.hypot(eye[1].x - eye[5].x, eye[1].y - eye[5].y);
-const b = Math.hypot(eye[2].x - eye[4].x, eye[2].y - eye[4].y);
-const c = Math.hypot(eye[0].x - eye[3].x, eye[0].y - eye[3].y);
-return (a + b) / (2.0 * c);
+  const a = Math.hypot(eye[1].x - eye[5].x, eye[1].y - eye[5].y);
+  const b = Math.hypot(eye[2].x - eye[4].x, eye[2].y - eye[4].y);
+  const c = Math.hypot(eye[0].x - eye[3].x, eye[0].y - eye[3].y);
+  return (a + b) / (2.0 * c);
 }
 
 async function sha256(message) {
-const msgBuffer = new TextEncoder().encode(message);
-const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2,'0')).join('');
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 function validationCompleteSuccess() {
-cancelAnimationFrame(trackingLoopId);
-badge.innerText = "✓ Identity Verified";
-badge.className = "status-badge success";
-challengeBox.className = "challenge-card success";
-instruction.innerText = "Verification passed. Hash: " + faceHash.slice(0,10) + "...";
-dot2.className = "dot done";
-if (video.srcObject) video.srcObject.getTracks().forEach(track => track.stop());
-startBtn.style.display = "none";
-submitBtn.style.display = "flex";
+  cancelAnimationFrame(trackingLoopId);
+  badge.innerText = "✓ Identity Verified";
+  badge.className = "status-badge success";
+  challengeBox.className = "challenge-card success";
+  instruction.innerText = "Verification passed! Ready to submit.";
+  dot2.className = "dot done";
+
+  // Turn off camera tracks to save battery/resources
+  if (video.srcObject) {
+    video.srcObject.getTracks().forEach(track => track.stop());
+  }
+
+  startBtn.style.display = "none";
+  submitBtn.style.display = "flex";
 }
 
 function handleFormSubmit(e) {
-e.preventDefault();
-const email = document.getElementById('email').value;
-const password = document.getElementById('password').value;
-// SEND THIS TO YOUR BACKEND
-console.log({email, password, faceHash});
-alert(`Registration Successful!\nEmail: ${email}\nFaceHash: ${faceHash.slice(0,16)}...\n\nSend hash + email to backend`);
+  e.preventDefault();
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+
+  console.log({ email, password, faceHash });
+  alert(`Registration Successful!\nEmail: ${email}\nFaceHash: ${faceHash ? faceHash.slice(0, 16) + '...' : 'N/A'}`);
 }
 
-// Init
-window.onload = initAI;
+window.addEventListener('DOMContentLoaded', initAI);
 </script>
 </body>
 </html>
