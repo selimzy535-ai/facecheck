@@ -1,124 +1,121 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Biometric Identity Verification - Optimized</title>
+<title>Biometric Liveness & ID OCR Scan</title>
 
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
-<link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 
 <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/dist/face-api.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <style>
-:root { 
-  --bg-color: #0f172a; 
-  --card-bg: #1e293b; 
-  --primary: #3b82f6; 
-  --primary-hover: #2563eb; 
-  --success: #10b981; 
-  --danger: #ef4444; 
-  --text: #f8fafc; 
-  --text-muted: #94a3b8; 
+:root {
+  --bg-color: #0f172a;
+  --card-bg: #1e293b;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --success: #10b981;
+  --danger: #ef4444;
+  --text: #f8fafc;
+  --text-muted: #94a3b8;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
 body { background-color: var(--bg-color); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-.container { background-color: var(--card-bg); width: 100%; max-width: 450px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); border: 1px solid #334155; }
-h2 { font-size: 24px; font-weight: 600; margin-bottom: 8px; text-align: center; }
-.subtitle { color: var(--text-muted); font-size: 14px; text-align: center; margin-bottom: 25px; }
-.form-group { margin-bottom: 20px; }
-label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; color: #cbd5e1; }
-input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #475569; background-color: #0f172a; color: white; font-size: 15px; outline: none; transition: border 0.2s; }
+.container { background-color: var(--card-bg); width: 100%; max-width: 480px; padding: 25px; border-radius: 16px; border: 1px solid #334155; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); }
+h2 { font-size: 22px; font-weight: 600; margin-bottom: 6px; text-align: center; }
+.subtitle { color: var(--text-muted); font-size: 13px; text-align: center; margin-bottom: 20px; }
+.form-group { margin-bottom: 16px; }
+label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: #cbd5e1; }
+input { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #475569; background-color: #0f172a; color: white; font-size: 14px; outline: none; }
 input:focus { border-color: var(--primary); }
-.scanner-wrapper { position: relative; width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 12px; overflow: hidden; margin-bottom: 20px; border: 2px solid #334155; }
-video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-.overlay-box { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 15px; pointer-events: none; }
-.status-badge { align-self: center; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px); padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; border: 1px solid #475569; letter-spacing: 0.5px; }
+
+.scanner-wrapper { position: relative; width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 12px; overflow: hidden; margin-bottom: 16px; border: 2px solid #334155; }
+video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); /* Mirrored for face scan */ }
+video.unmirrored { transform: scaleX(1); /* Un-mirrored for ID text reading */ }
+
+.overlay-box { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; pointer-events: none; }
+.status-badge { align-self: center; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(4px); padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #475569; }
 .status-badge.loading { color: #f59e0b; border-color: #f59e0b; }
 .status-badge.ready { color: var(--primary); border-color: var(--primary); }
 .status-badge.success { color: var(--success); border-color: var(--success); }
 .status-badge.error { color: var(--danger); border-color: var(--danger); }
-.challenge-card { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); padding: 15px; border-radius: 10px; border-left: 4px solid var(--primary); display: flex; flex-direction: column; gap: 4px; transition: all 0.3s; }
-.challenge-card.success { border-left-color: var(--success); }
-.challenge-title { font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 1px; }
-.challenge-instruction { font-size: 16px; font-weight: 600; color: #fff; }
-.progress-dots { display: flex; gap: 6px; margin-top: 5px; }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: #475569; transition: background 0.3s, transform 0.3s; }
-.dot.active { background: var(--primary); transform: scale(1.2); }
-.dot.done { background: var(--success); }
-.btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; background-color: var(--primary); color: white; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+.step-card { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); padding: 12px; border-radius: 8px; border-left: 4px solid var(--primary); }
+.step-title { font-size: 10px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 0.8px; }
+.step-instruction { font-size: 14px; font-weight: 600; color: #fff; margin-top: 2px; }
+
+.btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; background-color: var(--primary); color: white; margin-top: 6px; }
 .btn:hover:not(:disabled) { background-color: var(--primary-hover); }
 .btn:disabled { background-color: #334155; color: #64748b; cursor: not-allowed; }
-.btn-submit { background-color: var(--success); margin-top: 10px; display: none; }
-.btn-submit:hover { background-color: #059669; }
+.btn-submit { background-color: var(--success); display: none; }
+
+canvas { display: none; /* Hidden frame capture buffer */ }
 </style>
 </head>
 <body>
+
 <div class="container">
-  <h2>Secure Registration</h2>
-  <p class="subtitle">Complete human verification to activate your account</p>
-  <form id="signupForm" onsubmit="handleFormSubmit(event)">
+  <h2>Account Verification</h2>
+  <p class="subtitle">Complete liveness & document scan to register</p>
+  
+  <form id="verifyForm" onsubmit="handleFormSubmit(event)">
     <div class="form-group">
       <label for="email">Email Address</label>
       <input id="email" type="email" placeholder="name@example.com" required>
     </div>
     <div class="form-group">
       <label for="password">Password</label>
-      <input id="password" type="password" placeholder="••••" required>
+      <input id="password" type="password" placeholder="••••••••" required>
     </div>
-    
-    <label>Identity & Liveness Verification</label>
+
+    <label>Live Camera Terminal</label>
     <div class="scanner-wrapper">
       <video id="webcam" autoplay muted playsinline></video>
       <div class="overlay-box">
-        <div id="badge" class="status-badge loading">Loading AI Engine...</div>
-        <div id="challengeBox" class="challenge-card" style="opacity: 0;">
-          <div class="challenge-title">Active Security Challenge</div>
-          <div id="instruction" class="challenge-instruction">Please wait...</div>
-          <div class="progress-dots">
-            <div id="dot1" class="dot"></div>
-            <div id="dot2" class="dot"></div>
-          </div>
+        <div id="badge" class="status-badge loading">Loading AI Engines...</div>
+        <div id="stepCard" class="step-card">
+          <div id="stepTitle" class="step-title">Step 1: Face Liveness</div>
+          <div id="instruction" class="step-instruction">Initializing...</div>
         </div>
       </div>
     </div>
-    
-    <button type="button" id="startBtn" class="btn" onclick="startLivenessTest()" disabled>Start Face Scan</button>
-    <button type="submit" id="submitBtn" class="btn btn-submit">✓ Complete Registration</button>
+
+    <button type="button" id="startBtn" class="btn" onclick="startLivenessPhase()" disabled>Start Liveness Scan</button>
+    <button type="button" id="captureIdBtn" class="btn" onclick="captureAndScanID()" style="display:none;">📷 Capture ID Card Frame</button>
+    <button type="submit" id="submitBtn" class="btn btn-submit">✓ Submit Registration Payload</button>
   </form>
 </div>
+
+<canvas id="snapshotCanvas"></canvas>
 
 <script>
 const video = document.getElementById('webcam');
 const badge = document.getElementById('badge');
-const challengeBox = document.getElementById('challengeBox');
+const stepTitle = document.getElementById('stepTitle');
 const instruction = document.getElementById('instruction');
 const startBtn = document.getElementById('startBtn');
+const captureIdBtn = document.getElementById('captureIdBtn');
 const submitBtn = document.getElementById('submitBtn');
-const dot1 = document.getElementById('dot1');
-const dot2 = document.getElementById('dot2');
+const snapshotCanvas = document.getElementById('snapshotCanvas');
 
-let modelsLoaded = false;
-let runningTest = false;
-let currentStep = 0;
-let selectedChallenges = [];
-let trackingLoopId = null;
-let faceHash = null;
-let blinkCount = 0;
-let lastEar = 0.3;
-let lastFrameTime = 0;
-
-// Optimized Tiny Face Detector Options (inputSize 160 = ultra fast detection)
 let detectorOptions;
+let modelsLoaded = false;
+let trackingLoopId = null;
+let currentPhase = 'IDLE'; // 'FACE_LIVENESS' | 'ID_SCAN' | 'COMPLETE'
 
-const CHALLENGE_POOL = ['BLINK', 'LOOK_LEFT', 'LOOK_RIGHT', 'LOOK_UP'];
+// Biometric & OCR Payload Container
+const verificationPayload = {
+  liveFaceDescriptor: null,
+  hashedIDNumber: null
+};
 
-async function initAI() {
+// 1. Initialize Face-API Models
+async function initVerificationEngine() {
   try {
-    badge.innerText = "Loading AI Models...";
     const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/model';
-    
-    // Load lightweight models concurrently
     await Promise.all([
       faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
       faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL),
@@ -127,182 +124,170 @@ async function initAI() {
 
     detectorOptions = new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.4 });
     modelsLoaded = true;
+    
     badge.innerText = "Connecting Webcam...";
     badge.className = "status-badge ready";
-    await startWebcam();
+    await startCameraStream();
   } catch (err) {
-    badge.innerText = "Fatal: AI Network Error";
+    badge.innerText = "Error Loading AI Engines";
     badge.className = "status-badge error";
-    console.error("Model Loading Error:", err);
+    console.error(err);
   }
 }
 
-async function startWebcam() {
+// 2. Start Camera Stream
+async function startCameraStream() {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: "user",
-        width: { ideal: 480 },
-        height: { ideal: 360 },
-        frameRate: { ideal: 30 }
-      }
+      video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } }
     });
     video.srcObject = stream;
     startBtn.disabled = false;
-    badge.innerText = "Ready to Scan";
+    badge.innerText = "Ready";
+    instruction.innerText = "Press Start Liveness Scan when ready";
   } catch (err) {
-    badge.innerText = "Camera Access Denied";
+    badge.innerText = "Camera Permission Denied";
     badge.className = "status-badge error";
-    console.error("Camera Error:", err);
   }
 }
 
-function startLivenessTest() {
-  if (!modelsLoaded || runningTest) return;
-  
-  runningTest = true;
-  blinkCount = 0;
-  currentStep = 0;
-  startBtn.disabled = true;
-  challengeBox.style.opacity = "1";
-  badge.innerText = "Verifying Liveness...";
-  badge.className = "status-badge ready";
+// 3. PHASE 1: Liveness Verification Loop
+function startLivenessPhase() {
+  if (!modelsLoaded) return;
+  currentPhase = 'FACE_LIVENESS';
+  startBtn.style.display = "none";
+  badge.innerText = "Performing Liveness Test...";
+  instruction.innerText = "Turn your face slightly to the LEFT";
 
-  // Pick 2 random challenges
-  const shuffled = [...CHALLENGE_POOL].sort(() => 0.5 - Math.random());
-  selectedChallenges = [shuffled[0], shuffled[1]];
-  
-  updateChallengeUI();
-  requestAnimationFrame(executeTrackingLoop);
+  requestAnimationFrame(livenessLoop);
 }
 
-function updateChallengeUI() {
-  dot1.className = currentStep === 0 ? "dot active" : currentStep > 0 ? "dot done" : "dot";
-  dot2.className = currentStep === 1 ? "dot active" : currentStep > 1 ? "dot done" : "dot";
-  
-  const activeTask = selectedChallenges[currentStep];
-  if (activeTask === 'BLINK') instruction.innerText = "Blink your eyes 2 times";
-  if (activeTask === 'LOOK_LEFT') instruction.innerText = "Turn your face to the LEFT";
-  if (activeTask === 'LOOK_RIGHT') instruction.innerText = "Turn your face to the RIGHT";
-  if (activeTask === 'LOOK_UP') instruction.innerText = "Tilt your head UPWARDS";
-}
+async function livenessLoop() {
+  if (currentPhase !== 'FACE_LIVENESS') return;
 
-async function executeTrackingLoop(timestamp) {
-  if (!runningTest) return;
+  const detection = await faceapi.detectSingleFace(video, detectorOptions)
+                             .withFaceLandmarks(true)
+                             .withFaceDescriptor();
 
-  // Throttle detection runs to every ~100ms (10 FPS is optimal for real-time tracking without lagging UI)
-  if (timestamp - lastFrameTime < 100) {
-    trackingLoopId = requestAnimationFrame(executeTrackingLoop);
-    return;
+  if (detection) {
+    const noseX = detection.landmarks.getNose()[3].x;
+    const jaw = detection.landmarks.getJawOutline();
+    const width = jaw[16].x - jaw[0].x;
+    const ratio = (noseX - jaw[0].x) / width;
+
+    // Head turn to left threshold
+    if (ratio < 0.38) {
+      // Save face descriptor array
+      verificationPayload.liveFaceDescriptor = Array.from(detection.descriptor);
+      
+      badge.innerText = "✓ Liveness Passed";
+      badge.className = "status-badge success";
+      transitionToIDPhase();
+      return;
+    }
   }
-  lastFrameTime = timestamp;
+
+  trackingLoopId = requestAnimationFrame(livenessLoop);
+}
+
+// 4. TRANSITION TO PHASE 2: ID Snapshot Scanning
+function transitionToIDPhase() {
+  currentPhase = 'ID_SCAN';
+  
+  // Un-mirror video feed so text on the ID card is readable
+  video.classList.add('unmirrored');
+
+  stepTitle.innerText = "Step 2: Document Verification";
+  instruction.innerText = "Hold your ID Card up to the camera and click Capture";
+  captureIdBtn.style.display = "block";
+}
+
+// 5. PHASE 2: Capture Snapshot & Run Tesseract OCR
+async function captureAndScanID() {
+  captureIdBtn.disabled = true;
+  badge.innerText = "Scanning ID Text (OCR)...";
+  badge.className = "status-badge loading";
+  instruction.innerText = "Reading document details...";
+
+  // Draw current webcam frame onto hidden canvas
+  const ctx = snapshotCanvas.getContext('2d');
+  snapshotCanvas.width = video.videoWidth;
+  snapshotCanvas.height = video.videoHeight;
+  ctx.drawImage(video, 0, 0, snapshotCanvas.width, snapshotCanvas.height);
 
   try {
-    // Light detection (No descriptor calculated here to maintain high speed)
-    const detection = await faceapi.detectSingleFace(video, detectorOptions).withFaceLandmarks(true);
+    // Initialize Tesseract Worker
+    const worker = await Tesseract.createWorker('eng');
+    const ret = await worker.recognize(snapshotCanvas);
+    await worker.terminate();
 
-    if (detection) {
-      const landmarks = detection.landmarks;
-      const activeTask = selectedChallenges[currentStep];
-      let taskPassed = false;
+    const text = ret.data.text;
+    console.log("Raw OCR Text Output:", text);
 
-      if (activeTask === 'BLINK') {
-        const ear = getEAR(landmarks.getLeftEye());
-        if (lastEar > 0.25 && ear < 0.20) blinkCount++;
-        lastEar = ear;
-        if (blinkCount >= 2) taskPassed = true;
-      } else if (activeTask === 'LOOK_LEFT' || activeTask === 'LOOK_RIGHT') {
-        const noseX = landmarks.getNose()[3].x;
-        const jaw = landmarks.getJawOutline();
-        const width = jaw[16].x - jaw[0].x;
-        const ratio = (noseX - jaw[0].x) / width;
-        if (activeTask === 'LOOK_LEFT' && ratio < 0.35) taskPassed = true;
-        if (activeTask === 'LOOK_RIGHT' && ratio > 0.65) taskPassed = true;
-      } else if (activeTask === 'LOOK_UP') {
-        const noseY = landmarks.getNose()[3].y;
-        const browY = landmarks.getEyebrowLeft()[1].y;
-        if (noseY < browY - 12) taskPassed = true;
-      }
+    // Regex to extract alphanumeric ID numbers (Adjust length pattern for your region)
+    const idMatch = text.match(/[A-Z0-9]{8,14}/g);
 
-      if (taskPassed) {
-        currentStep++;
-        if (currentStep >= selectedChallenges.length) {
-          await finalizeVerification();
-          return;
-        } else {
-          updateChallengeUI();
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-      }
+    if (idMatch && idMatch.length > 0) {
+      const rawID = idMatch[0];
+      
+      // Hash the extracted ID string using browser Web Crypto SHA-256
+      verificationPayload.hashedIDNumber = await sha256(rawID);
+      
+      badge.innerText = "✓ ID Verified & Hashed";
+      badge.className = "status-badge success";
+      instruction.innerText = `Captured ID Hash: ${verificationPayload.hashedIDNumber.slice(0, 14)}...`;
+      
+      completeVerification();
+    } else {
+      badge.innerText = "❌ No ID Number Detected";
+      badge.className = "status-badge error";
+      instruction.innerText = "Could not read ID number clearly. Hold closer and retry.";
+      captureIdBtn.disabled = false;
     }
   } catch (err) {
-    console.error("Tracking error:", err);
-  }
-
-  if (runningTest) {
-    trackingLoopId = requestAnimationFrame(executeTrackingLoop);
+    console.error(err);
+    badge.innerText = "OCR Processing Error";
+    badge.className = "status-badge error";
+    captureIdBtn.disabled = false;
   }
 }
 
-// Compute descriptor ONCE upon successful completion of all liveness steps
-async function finalizeVerification() {
-  runningTest = false;
-  badge.innerText = "Generating Security Hash...";
+// 6. Complete Verification Sequence
+function completeVerification() {
+  currentPhase = 'COMPLETE';
   
-  const finalDetection = await faceapi.detectSingleFace(video, detectorOptions)
-                                      .withFaceLandmarks(true)
-                                      .withFaceDescriptor();
-
-  if (finalDetection) {
-    faceHash = await sha256(JSON.stringify(Array.from(finalDetection.descriptor)));
-    validationCompleteSuccess();
-  } else {
-    // Retry fallback if face was lost at the exact moment of completion
-    runningTest = true;
-    requestAnimationFrame(executeTrackingLoop);
+  // Stop webcam tracks to save battery
+  if (video.srcObject) {
+    video.srcObject.getTracks().forEach(track => track.stop());
   }
+
+  captureIdBtn.style.display = "none";
+  submitBtn.style.display = "block";
 }
 
-function getEAR(eye) {
-  const a = Math.hypot(eye[1].x - eye[5].x, eye[1].y - eye[5].y);
-  const b = Math.hypot(eye[2].x - eye[4].x, eye[2].y - eye[4].y);
-  const c = Math.hypot(eye[0].x - eye[3].x, eye[0].y - eye[3].y);
-  return (a + b) / (2.0 * c);
-}
-
+// Utility: Browser Native SHA-256 Hashing
 async function sha256(message) {
   const msgBuffer = new TextEncoder().encode(message);
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
   return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-function validationCompleteSuccess() {
-  cancelAnimationFrame(trackingLoopId);
-  badge.innerText = "✓ Identity Verified";
-  badge.className = "status-badge success";
-  challengeBox.className = "challenge-card success";
-  instruction.innerText = "Verification passed! Ready to submit.";
-  dot2.className = "dot done";
-
-  // Turn off camera tracks to save battery/resources
-  if (video.srcObject) {
-    video.srcObject.getTracks().forEach(track => track.stop());
-  }
-
-  startBtn.style.display = "none";
-  submitBtn.style.display = "flex";
-}
-
+// Form Submission (Sends compiled payload to backend)
 function handleFormSubmit(e) {
   e.preventDefault();
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
 
-  console.log({ email, password, faceHash });
-  alert(`Registration Successful!\nEmail: ${email}\nFaceHash: ${faceHash ? faceHash.slice(0, 16) + '...' : 'N/A'}`);
+  const finalPayload = {
+    email: document.getElementById('email').value,
+    password: document.getElementById('password').value,
+    biometrics: verificationPayload
+  };
+
+  console.log("Final payload ready to POST to server:", finalPayload);
+  alert(`Registration Ready!\n\nHashed ID: ${finalPayload.biometrics.hashedIDNumber}\nFace Vector Points: ${finalPayload.biometrics.liveFaceDescriptor.length}`);
 }
 
-window.addEventListener('DOMContentLoaded', initAI);
+window.addEventListener('DOMContentLoaded', initVerificationEngine);
 </script>
 </body>
 </html>
+
